@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff7a18">
+<title>Pomodoro Timer</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pomodoro">
+<style>
+  :root{
+    --orange:#ff7a18;
+    --orange-soft:#ffa14d;
+    --bg:#0a0a0a;
+    --bg-2:#141414;
+    --bg-3:#1d1d1d;
+    --txt:#f5f5f5;
+    --muted:#8a8a8a;
+    --work:#ff7a18;
+    --break:#ffc266;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100dvh;
+    padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    transition:background .4s ease;
+  }
+  body.phase-break{background:#0c0a07}
+  .wrap{
+    width:100%;
+    max-width:480px;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    padding:24px 0;
+  }
+  header{text-align:center}
+  header h1{
+    font-size:1.1rem;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    margin:0;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .phase{
+    text-align:center;
+    font-size:1.05rem;
+    font-weight:700;
+    letter-spacing:.34em;
+    text-transform:uppercase;
+    color:var(--work);
+    transition:color .4s ease;
+  }
+  body.phase-break .phase{color:var(--break)}
+  .timer-card{
+    background:radial-gradient(120% 120% at 50% 0%,var(--bg-2),var(--bg));
+    border:1px solid #222;
+    border-radius:28px;
+    padding:34px 20px 30px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .ring{
+    position:relative;
+    width:260px;
+    height:260px;
+    max-width:74vw;
+    max-height:74vw;
+  }
+  .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring .track{fill:none;stroke:#222;stroke-width:10}
+  .ring .prog{
+    fill:none;
+    stroke:var(--work);
+    stroke-width:10;
+    stroke-linecap:round;
+    transition:stroke-dashoffset .35s linear,stroke .4s ease;
+    filter:drop-shadow(0 0 6px rgba(255,122,24,.45));
+  }
+  body.phase-break .ring .prog{stroke:var(--break);filter:drop-shadow(0 0 6px rgba(255,194,102,.45))}
+  .time{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+  }
+  .time .digits{
+    font-size:3.4rem;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.02em;
+  }
+  .time .cyc{font-size:.8rem;color:var(--muted);letter-spacing:.1em}
+  .controls{display:flex;gap:12px;width:100%}
+  button{
+    flex:1;
+    border:none;
+    border-radius:16px;
+    padding:16px 10px;
+    font-size:1rem;
+    font-weight:700;
+    letter-spacing:.04em;
+    cursor:pointer;
+    color:var(--txt);
+    background:var(--bg-3);
+    transition:transform .08s ease,background .2s ease,opacity .2s ease;
+  }
+  button:active{transform:scale(.96)}
+  button.primary{background:linear-gradient(135deg,var(--orange),#e85d00);color:#1a0d00}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  .settings{
+    background:var(--bg-2);
+    border:1px solid #222;
+    border-radius:20px;
+    padding:18px 18px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .settings h2{
+    margin:0 0 2px;
+    font-size:.78rem;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .field{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .field label{font-size:.95rem}
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{
+    flex:0 0 auto;
+    width:40px;height:40px;
+    padding:0;
+    border-radius:12px;
+    font-size:1.3rem;
+    line-height:1;
+    background:var(--bg-3);
+  }
+  .stepper input{
+    width:62px;
+    text-align:center;
+    background:var(--bg);
+    border:1px solid #2a2a2a;
+    color:var(--txt);
+    border-radius:10px;
+    padding:9px 4px;
+    font-size:1.05rem;
+    font-weight:700;
+    -moz-appearance:textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .status{
+    text-align:center;
+    font-size:.78rem;
+    color:var(--muted);
+    min-height:1.1em;
+    letter-spacing:.04em;
+  }
+  .status a{color:var(--orange-soft);cursor:pointer;text-decoration:underline}
+  footer{text-align:center;font-size:.72rem;color:#555;padding-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Pomodoro Timer</h1></header>
+
+  <div class="phase" id="phaseLabel">LAVORO</div>
+
+  <div class="timer-card">
+    <div class="ring">
+      <svg viewBox="0 0 120 120">
+        <circle class="track" cx="60" cy="60" r="54"></circle>
+        <circle class="prog" id="progRing" cx="60" cy="60" r="54"></circle>
+      </svg>
+      <div class="time">
+        <div class="digits" id="digits">55:00</div>
+        <div class="cyc" id="cycle">Ciclo 1</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="startBtn">Start</button>
+      <button id="pauseBtn" disabled>Pausa</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <div class="settings">
+    <h2>Impostazioni</h2>
+    <div class="field">
+      <label for="workMin">Minuti di lavoro</label>
+      <div class="stepper">
+        <button data-step="-1" data-target="workMin" aria-label="meno">−</button>
+        <input type="number" id="workMin" min="1" max="180" value="55" inputmode="numeric">
+        <button data-step="1" data-target="workMin" aria-label="più">+</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="breakMin">Minuti di pausa</label>
+      <div class="stepper">
+        <button data-step="-1" data-target="breakMin" aria-label="meno">−</button>
+        <input type="number" id="breakMin" min="1" max="120" value="5" inputmode="numeric">
+        <button data-step="1" data-target="breakMin" aria-label="più">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+  <footer>Funziona offline · Aggiungi alla home per installare</footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const LS_KEY = "pomodoro_state_v1";
+  const $ = id => document.getElementById(id);
+
+  const el = {
+    phase: $("phaseLabel"),
+    digits: $("digits"),
+    cycle: $("cycle"),
+    ring: $("progRing"),
+    start: $("startBtn"),
+    pause: $("pauseBtn"),
+    reset: $("resetBtn"),
+    work: $("workMin"),
+    brk: $("breakMin"),
+    status: $("status"),
+  };
+
+  // ---- Ring geometry ----
+  const R = 54, CIRC = 2 * Math.PI * R;
+  el.ring.style.strokeDasharray = CIRC;
+  el.ring.style.strokeDashoffset = 0;
+
+  // ---- State ----
+  const defaults = { workMin:55, breakMin:5 };
+  let state = {
+    phase: "work",        // "work" | "break"
+    cycle: 1,
+    remaining: defaults.workMin*60, // seconds
+    running: false,
+    workMin: defaults.workMin,
+    breakMin: defaults.breakMin,
+    endAt: null,          // timestamp ms when current phase ends (only while running)
+  };
+
+  let tickHandle = null;
+  let wakeLock = null;
+
+  // ---- Persistence ----
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      Object.assign(state, s);
+      // If it was running, recompute remaining from endAt (survives refresh).
+      if(state.running && state.endAt){
+        recalcFromEnd();
+      }
+    }catch(e){ /* ignore corrupt state */ }
+  }
+
+  function phaseDuration(phase){
+    return (phase === "work" ? state.workMin : state.breakMin) * 60;
+  }
+
+  // Recompute remaining/phase after a reload or tab-wake, advancing through
+  // any phases that elapsed while we weren't ticking.
+  function recalcFromEnd(){
+    let now = Date.now();
+    while(state.endAt && now >= state.endAt){
+      // phase just completed -> advance (silent catch-up, no sound/notif spam
+      // except the final boundary which advancePhase will announce)
+      advancePhase(true);
+    }
+    if(state.endAt){
+      state.remaining = Math.max(0, Math.round((state.endAt - now)/1000));
+    }
+  }
+
+  // ---- Audio (Web Audio API) ----
+  let audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+  // Bell-like tone: a couple of decaying partials.
+  function bell(freqs, when, dur){
+    const ctx = ensureAudio();
+    if(!ctx) return;
+    const t0 = ctx.currentTime + when;
+    freqs.forEach((f,i)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = f;
+      const peak = 0.6 / (i+1);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(peak, t0+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0+dur+0.05);
+    });
+  }
+  // Sound for START of break: gentle, descending, relaxing.
+  function soundBreakStart(){
+    bell([660, 880], 0, 1.1);
+    bell([523.25, 659.25], 0.28, 1.2);
+  }
+  // Sound for END of break (back to work): brighter, ascending, alerting.
+  function soundBreakEnd(){
+    bell([523.25], 0, 0.5);
+    bell([783.99], 0.16, 0.5);
+    bell([1046.5, 1318.5], 0.32, 0.9);
+  }
+
+  // ---- Notifications ----
+  function requestNotif(){
+    if(!("Notification" in window)) return;
+    if(Notification.permission === "default"){
+      Notification.requestPermission().catch(()=>{});
+    }
+  }
+  function notify(text){
+    if(!("Notification" in window) || Notification.permission !== "granted") return;
+    try{
+      new Notification("Pomodoro Timer", { body:text, icon:"icon.svg", tag:"pomodoro", renotify:true });
+    }catch(e){ /* some platforms require SW notifications; ignore */ }
+  }
+
+  // ---- Wake Lock ----
+  async function requestWakeLock(){
+    if(!("wakeLock" in navigator)) return;
+    try{
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", ()=>{ wakeLock = null; });
+    }catch(e){ /* silent fallback */ }
+  }
+  function releaseWakeLock(){
+    if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
+  }
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState === "visible"){
+      if(state.running){
+        recalcFromEnd();
+        requestWakeLock();
+        render();
+      }
+    }
+  });
+
+  // ---- Phase logic ----
+  // silent=true during catch-up of already-elapsed phases on reload.
+  function advancePhase(silent){
+    if(state.phase === "work"){
+      // work -> break
+      state.phase = "break";
+      if(!silent){
+        soundBreakStart();
+        notify("Fai una pausa di " + state.breakMin + " minuti");
+      }
+    }else{
+      // break -> work (new cycle)
+      state.phase = "work";
+      state.cycle += 1;
+      if(!silent){
+        soundBreakEnd();
+        notify("Si riprende a lavorare");
+      }
+    }
+    const dur = phaseDuration(state.phase);
+    if(state.running && state.endAt){
+      // chain the next phase end onto the previous boundary
+      state.endAt = state.endAt + dur*1000;
+    }
+    state.remaining = dur;
+  }
+
+  function tick(){
+    if(!state.running) return;
+    const now = Date.now();
+    if(now >= state.endAt){
+      advancePhase(false);
+      // handle the (unlikely) case multiple phases elapsed in one gap
+      while(now >= state.endAt){ advancePhase(false); }
+    }
+    state.remaining = Math.max(0, Math.round((state.endAt - now)/1000));
+    render();
+    save();
+  }
+
+  // ---- Controls ----
+  function start(){
+    if(state.running) return;
+    ensureAudio();          // unlock audio within user gesture
+    requestNotif();
+    state.running = true;
+    state.endAt = Date.now() + state.remaining*1000;
+    requestWakeLock();
+    if(tickHandle) clearInterval(tickHandle);
+    tickHandle = setInterval(tick, 250);
+    render(); save();
+  }
+  function pause(){
+    if(!state.running) return;
+    // freeze remaining
+    state.remaining = Math.max(0, Math.round((state.endAt - Date.now())/1000));
+    state.running = false;
+    state.endAt = null;
+    if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
+    releaseWakeLock();
+    render(); save();
+  }
+  function reset(){
+    if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
+    releaseWakeLock();
+    state.running = false;
+    state.phase = "work";
+    state.cycle = 1;
+    state.endAt = null;
+    state.remaining = phaseDuration("work");
+    render(); save();
+  }
+
+  // ---- Settings ----
+  function clampInt(v, min, max, fallback){
+    v = parseInt(v,10);
+    if(isNaN(v)) v = fallback;
+    return Math.min(max, Math.max(min, v));
+  }
+  function applySettings(){
+    state.workMin = clampInt(el.work.value, 1, 180, defaults.workMin);
+    state.breakMin = clampInt(el.brk.value, 1, 120, defaults.breakMin);
+    el.work.value = state.workMin;
+    el.brk.value = state.breakMin;
+    // If idle, reflect new duration in the current (not-yet-started) phase.
+    if(!state.running){
+      state.remaining = phaseDuration(state.phase);
+    }
+    render(); save();
+  }
+
+  // ---- Render ----
+  function fmt(s){
+    const m = Math.floor(s/60), ss = s%60;
+    return String(m).padStart(2,"0") + ":" + String(ss).padStart(2,"0");
+  }
+  function render(){
+    el.digits.textContent = fmt(state.remaining);
+    el.phase.textContent = state.phase === "work" ? "LAVORO" : "PAUSA";
+    el.cycle.textContent = "Ciclo " + state.cycle;
+    document.body.classList.toggle("phase-break", state.phase === "break");
+
+    const total = phaseDuration(state.phase);
+    const frac = total > 0 ? state.remaining/total : 0;
+    el.ring.style.strokeDashoffset = CIRC * (1 - frac);
+
+    el.start.disabled = state.running;
+    el.pause.disabled = !state.running;
+
+    document.title = (state.running ? fmt(state.remaining)+" · " : "") +
+                     (state.phase === "work" ? "Lavoro" : "Pausa") + " — Pomodoro";
+  }
+
+  // ---- Events ----
+  el.start.addEventListener("click", start);
+  el.pause.addEventListener("click", pause);
+  el.reset.addEventListener("click", reset);
+  el.work.addEventListener("change", applySettings);
+  el.brk.addEventListener("change", applySettings);
+  document.querySelectorAll(".stepper button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const target = $(b.dataset.target);
+      const step = parseInt(b.dataset.step,10);
+      target.value = (parseInt(target.value,10)||0) + step;
+      applySettings();
+    });
+  });
+
+  // ---- Notification permission hint ----
+  function updateStatus(){
+    if(!("Notification" in window)){
+      el.status.textContent = "Notifiche non supportate da questo browser.";
+      return;
+    }
+    if(Notification.permission === "granted"){
+      el.status.textContent = "Notifiche attive · schermo tenuto acceso durante il timer.";
+    }else if(Notification.permission === "denied"){
+      el.status.textContent = "Notifiche bloccate dal browser (il timer funziona comunque).";
+    }else{
+      el.status.innerHTML = 'Per gli avvisi: <a id="askNotif">abilita le notifiche</a>.';
+      const a = $("askNotif");
+      if(a) a.addEventListener("click", ()=>{ requestNotif(); setTimeout(updateStatus,500); });
+    }
+  }
+
+  // ---- Boot ----
+  load();
+  el.work.value = state.workMin;
+  el.brk.value = state.breakMin;
+  if(state.running){
+    // resume ticking after a refresh
+    if(state.endAt){
+      tickHandle = setInterval(tick, 250);
+      requestWakeLock();
+    }else{
+      state.running = false;
+    }
+  }
+  render();
+  updateStatus();
+
+  // ---- Service worker ----
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
