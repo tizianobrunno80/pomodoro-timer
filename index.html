@@ -170,6 +170,17 @@
   }
   .stepper input::-webkit-outer-spin-button,
   .stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .seg{display:flex;gap:6px;background:var(--bg);border:1px solid #2a2a2a;border-radius:12px;padding:4px}
+  .seg button{
+    flex:0 0 auto;
+    padding:8px 16px;
+    border-radius:9px;
+    font-size:.9rem;
+    font-weight:700;
+    background:transparent;
+    color:var(--muted);
+  }
+  .seg button.active{background:linear-gradient(135deg,var(--orange),#e85d00);color:#1a0d00}
   .status{
     text-align:center;
     font-size:.78rem;
@@ -224,6 +235,13 @@
         <button data-step="1" data-target="breakMin" aria-label="più">+</button>
       </div>
     </div>
+    <div class="field">
+      <label for="soundSec">Durata suono</label>
+      <div class="seg" id="soundSeg">
+        <button type="button" data-sec="5">5 sec</button>
+        <button type="button" data-sec="10">10 sec</button>
+      </div>
+    </div>
   </div>
 
   <div class="status" id="status"></div>
@@ -246,6 +264,7 @@
     reset: $("resetBtn"),
     work: $("workMin"),
     brk: $("breakMin"),
+    soundSeg: $("soundSeg"),
     status: $("status"),
   };
 
@@ -255,7 +274,7 @@
   el.ring.style.strokeDashoffset = 0;
 
   // ---- State ----
-  const defaults = { workMin:55, breakMin:5 };
+  const defaults = { workMin:55, breakMin:5, soundSec:5 };
   let state = {
     phase: "work",        // "work" | "break"
     cycle: 1,
@@ -263,6 +282,7 @@
     running: false,
     workMin: defaults.workMin,
     breakMin: defaults.breakMin,
+    soundSec: defaults.soundSec,    // 5 or 10 — chime duration at phase change
     endAt: null,          // timestamp ms when current phase ends (only while running)
   };
 
@@ -333,17 +353,27 @@
       osc.stop(t0+dur+0.05);
     });
   }
-  // Sound for START of break: gentle, descending, relaxing.
-  function soundBreakStart(){
-    bell([660, 880], 0, 1.1);
-    bell([523.25, 659.25], 0.28, 1.2);
+  // One "strike" of the break-start chime: gentle, descending, relaxing.
+  function strikeBreakStart(when){
+    bell([660, 880], when, 1.0);
+    bell([523.25, 659.25], when+0.26, 1.1);
   }
-  // Sound for END of break (back to work): brighter, ascending, alerting.
-  function soundBreakEnd(){
-    bell([523.25], 0, 0.5);
-    bell([783.99], 0.16, 0.5);
-    bell([1046.5, 1318.5], 0.32, 0.9);
+  // One "strike" of the break-end chime: brighter, ascending, alerting.
+  function strikeBreakEnd(when){
+    bell([523.25], when, 0.45);
+    bell([783.99], when+0.15, 0.45);
+    bell([1046.5, 1318.5], when+0.30, 0.8);
   }
+  // Repeat a strike across the chosen total duration (5 or 10 s).
+  function playChime(strikeFn, totalSec){
+    if(!ensureAudio()) return;
+    const interval = 1.35;
+    for(let t = 0; t < totalSec - 0.4; t += interval){
+      strikeFn(t);
+    }
+  }
+  function soundBreakStart(){ playChime(strikeBreakStart, state.soundSec); }
+  function soundBreakEnd(){ playChime(strikeBreakEnd, state.soundSec); }
 
   // ---- Notifications ----
   function requestNotif(){
@@ -507,6 +537,20 @@
       applySettings();
     });
   });
+  function syncSoundSeg(){
+    el.soundSeg.querySelectorAll("button").forEach(b=>{
+      b.classList.toggle("active", parseInt(b.dataset.sec,10) === state.soundSec);
+    });
+  }
+  el.soundSeg.addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-sec]");
+    if(!b) return;
+    state.soundSec = parseInt(b.dataset.sec,10);
+    syncSoundSeg();
+    save();
+    // preview the chime so the choice is audible (user gesture unlocks audio)
+    soundBreakStart();
+  });
 
   // ---- Notification permission hint ----
   function updateStatus(){
@@ -527,8 +571,10 @@
 
   // ---- Boot ----
   load();
+  if(state.soundSec !== 5 && state.soundSec !== 10) state.soundSec = defaults.soundSec;
   el.work.value = state.workMin;
   el.brk.value = state.breakMin;
+  syncSoundSeg();
   if(state.running){
     // resume ticking after a refresh
     if(state.endAt){
