@@ -206,7 +206,9 @@
     border-radius:9px;background:var(--bg-3);color:var(--orange-soft);font-weight:700;
   }
   .slots{display:flex;flex-direction:column;gap:7px}
-  .slot{display:flex;align-items:center;gap:8px}
+  .slot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .slot-cat{background:var(--bg);border:1px solid #2a2a2a;color:var(--txt);border-radius:9px;
+    padding:7px 6px;font-size:.82rem;color-scheme:dark;flex:1;min-width:110px}
   .slot input[type=time]{
     flex:1;background:var(--bg);border:1px solid #2a2a2a;color:var(--txt);
     border-radius:9px;padding:8px 8px;font-size:.95rem;font-weight:600;
@@ -261,8 +263,7 @@
   .badge.on{opacity:1;filter:none;border-color:var(--orange)}
   .badge .bi{font-size:1.5rem;line-height:1}
   .badge .bl{font-size:.62rem;color:var(--muted);font-weight:700}
-  .cat-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none}
-  .cat-row::-webkit-scrollbar{display:none}
+  .cat-row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:2px}
   .chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;
     background:var(--bg-2);border:1.5px solid #2a2a2a;color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap}
   .chip .ci{font-size:1rem;line-height:1}
@@ -274,6 +275,12 @@
   .cat-leg .clv{color:var(--muted);font-variant-numeric:tabular-nums}
   .donut-wrap{display:flex;justify-content:center;margin-top:4px}
   .donut-wrap svg{width:150px;height:150px}
+  .sound-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .sound-opts button{padding:11px 4px;border-radius:10px;background:var(--bg);border:1.5px solid #2a2a2a;
+    color:var(--muted);font-size:.76rem;font-weight:700;cursor:pointer}
+  .sound-opts button.active{border-color:var(--orange);color:var(--txt)}
+  .vol-row{display:flex;align-items:center;gap:10px}
+  .vol-row input[type=range]{flex:1;accent-color:var(--orange)}
   .status{
     text-align:center;
     font-size:.78rem;
@@ -437,6 +444,12 @@
     </div>
 
     <div class="settings">
+      <h2 data-i18n="categories">Categorie</h2>
+      <div class="field-note" data-i18n="catHint">Assegna ogni sessione a un'attività. Scegli quali categorie mostrare sul timer e nel grafico a torta.</div>
+      <div id="catToggles"></div>
+    </div>
+
+    <div class="settings">
       <h2 data-i18n="general">Generali</h2>
       <div class="field">
         <label data-i18n="language">Lingua</label>
@@ -484,6 +497,22 @@
         </div>
       </div>
       <div class="field-note" data-i18n="goalsHint">Obiettivi giornalieri: quante sessioni e quanti minuti di focus vuoi fare al giorno. I progressi sono nella schermata Progressi 📊.</div>
+    </div>
+
+    <div class="settings">
+      <h2 data-i18n="breakSoundTitle">Suono pausa</h2>
+      <div class="sound-opts" id="breakSoundOpts">
+        <button type="button" data-bs="off" data-i18n="bsOff">Silenzio</button>
+        <button type="button" data-bs="white" data-i18n="bsWhite">Rumore bianco</button>
+        <button type="button" data-bs="brown" data-i18n="bsBrown">Rumore marrone</button>
+        <button type="button" data-bs="binaural" data-i18n="bsBinaural">Binaurale</button>
+        <button type="button" data-bs="rain" data-i18n="bsRain">Pioggia</button>
+      </div>
+      <div class="vol-row">
+        <span data-i18n="volume">Volume</span>
+        <input type="range" id="breakVol" min="0" max="100" value="40">
+      </div>
+      <div class="field-note" data-i18n="binauralHint">Binaurale: usa le cuffie per percepire l'effetto.</div>
     </div>
 
   <div class="settings">
@@ -538,6 +567,9 @@
     catDonut: $("catDonut"),
     catLegend: $("catLegend"),
     homeCategory: $("homeCategory"),
+    breakSoundOpts: $("breakSoundOpts"),
+    breakVol: $("breakVol"),
+    catToggles: $("catToggles"),
     homeSlot: $("homeSlot"),
     statsDefault: $("statsDefault"),
     statsCard: $("statsCard"),
@@ -595,6 +627,9 @@
     goalSessions: 8,      // daily target: focus sessions
     goalMinutes: 120,     // daily target: focus minutes
     category: "work",     // current activity category for logged sessions
+    breakSound: "off",    // ambient during break: off|white|brown|binaural|rain
+    breakVolume: 40,      // 0..100
+    catEnabled: {},       // which categories are shown (filled on boot)
     home: { category:true, stats:false, times:false, tips:true },  // which sections show on the home screen
     sessions: [],         // completed focus sessions: [{t: epochMs, mins: focusMinutes}]
     statPeriod: "today",  // stats view: today | week | month | all
@@ -634,6 +669,8 @@
       times:"Tempi", homeSections:"Sezioni in home", tips:"Frasi motivazionali",
       goalsHint:"Obiettivi giornalieri: quante sessioni e quanti minuti di focus vuoi fare al giorno. I progressi sono nella schermata Progressi 📊.",
       categories:"Categorie", chartCategory:"Per categoria", catStudy:"Studio", catWork:"Lavoro", catSport:"Sport", catTraining:"Allenamento", catRelax:"Relax", catFree:"Tempo libero",
+      breakSoundTitle:"Suono pausa", bsOff:"Silenzio", bsWhite:"Rumore bianco", bsBrown:"Rumore marrone", bsBinaural:"Binaurale", bsRain:"Pioggia", volume:"Volume", binauralHint:"Binaurale: usa le cuffie per percepire l'effetto.",
+      catHint:"Assegna ogni sessione a un'attività. Scegli quali categorie mostrare sul timer e nel grafico a torta.",
       days:["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
     },
     en: {
@@ -659,6 +696,8 @@
       times:"Times", homeSections:"Home sections", tips:"Motivational quotes",
       goalsHint:"Daily goals: how many focus sessions and minutes you aim for each day. Track them in the Progress screen 📊.",
       categories:"Categories", chartCategory:"By category", catStudy:"Study", catWork:"Work", catSport:"Sport", catTraining:"Training", catRelax:"Relax", catFree:"Free time",
+      breakSoundTitle:"Break sound", bsOff:"Silence", bsWhite:"White noise", bsBrown:"Brown noise", bsBinaural:"Binaural", bsRain:"Rain", volume:"Volume", binauralHint:"Binaural: use headphones to feel the effect.",
+      catHint:"Tag each session with an activity. Choose which categories show on the timer and in the pie chart.",
       days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     },
     es: {
@@ -684,6 +723,8 @@
       times:"Tiempos", homeSections:"Secciones en inicio", tips:"Frases motivadoras",
       goalsHint:"Objetivos diarios: cuántas sesiones y minutos de focus quieres hacer al día. Míralos en la pantalla Progreso 📊.",
       categories:"Categorías", chartCategory:"Por categoría", catStudy:"Estudio", catWork:"Trabajo", catSport:"Deporte", catTraining:"Entrenamiento", catRelax:"Relax", catFree:"Tiempo libre",
+      breakSoundTitle:"Sonido de pausa", bsOff:"Silencio", bsWhite:"Ruido blanco", bsBrown:"Ruido marrón", bsBinaural:"Binaural", bsRain:"Lluvia", volume:"Volumen", binauralHint:"Binaural: usa auriculares para percibir el efecto.",
+      catHint:"Asigna cada sesión a una actividad. Elige qué categorías mostrar en el temporizador y en el gráfico circular.",
       days:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
     }
   };
@@ -933,13 +974,23 @@
   ];
   function renderCategories(){
     el.catRow.innerHTML = "";
-    CATEGORIES.forEach(c=>{
+    CATEGORIES.filter(c=>state.catEnabled[c.id]).forEach(c=>{
       const chip = document.createElement("div");
       chip.className = "chip" + (c.id===state.category ? " active" : "");
       chip.dataset.cat = c.id;
       if(c.id===state.category) chip.style.borderColor = c.color;
       chip.innerHTML = '<span class="ci">'+c.icon+'</span>'+t(c.k);
       el.catRow.appendChild(chip);
+    });
+  }
+  function renderCatToggles(){
+    el.catToggles.innerHTML = "";
+    CATEGORIES.forEach(c=>{
+      const row = document.createElement("div");
+      row.className = "field";
+      row.innerHTML = '<label><span class="ci" style="margin-right:7px">'+c.icon+'</span>'+t(c.k)+'</label>'+
+        '<label class="switch"><input type="checkbox" data-caten="'+c.id+'"'+(state.catEnabled[c.id]?' checked':'')+'><span class="slider"></span></label>';
+      el.catToggles.appendChild(row);
     });
   }
   function renderCategoryChart(){
@@ -1059,6 +1110,67 @@
   function soundBreakStart(){ playChime(strikeBreakStart, state.soundSec); }
   function soundBreakEnd(){ playChime(strikeBreakEnd, state.soundSec); }
 
+  // ---- Break ambient sound (generated with Web Audio, no files) ----
+  let ambNodes = null, previewTimer = null;
+  function makeNoiseBuffer(ctx, type){
+    const len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    if(type === "brown"){
+      let last = 0;
+      for(let i=0;i<len;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*3.5; }
+    } else {
+      for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    }
+    return buf;
+  }
+  function ambMult(){ return state.breakSound === "binaural" ? 0.16 : 0.5; }
+  function startAmbient(){
+    stopAmbient();
+    if(state.breakSound === "off") return;
+    const ctx = ensureAudio(); if(!ctx) return;
+    const g = ctx.createGain();
+    g.gain.value = (state.breakVolume/100) * ambMult();
+    g.connect(ctx.destination);
+    const nodes = { gain:g, sources:[] };
+    if(state.breakSound === "binaural"){
+      const base=180, beat=10;
+      const oscL=ctx.createOscillator(), oscR=ctx.createOscillator();
+      oscL.type="sine"; oscR.type="sine"; oscL.frequency.value=base; oscR.frequency.value=base+beat;
+      if(ctx.createStereoPanner){
+        const pL=ctx.createStereoPanner(); pL.pan.value=-1; const pR=ctx.createStereoPanner(); pR.pan.value=1;
+        oscL.connect(pL).connect(g); oscR.connect(pR).connect(g);
+      } else { oscL.connect(g); oscR.connect(g); }
+      oscL.start(); oscR.start(); nodes.sources.push(oscL, oscR);
+    } else {
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx, state.breakSound); src.loop = true;
+      if(state.breakSound === "rain" || state.breakSound === "brown"){
+        const lp = ctx.createBiquadFilter(); lp.type="lowpass";
+        lp.frequency.value = state.breakSound === "rain" ? 1400 : 700;
+        src.connect(lp).connect(g);
+      } else { src.connect(g); }
+      src.start(); nodes.sources.push(src);
+    }
+    ambNodes = nodes;
+  }
+  function stopAmbient(){
+    if(previewTimer){ clearTimeout(previewTimer); previewTimer = null; }
+    if(!ambNodes) return;
+    ambNodes.sources.forEach(s=>{ try{ s.stop(); }catch(e){} });
+    try{ ambNodes.gain.disconnect(); }catch(e){}
+    ambNodes = null;
+  }
+  function setAmbientVolume(){
+    if(ambNodes){ try{ ambNodes.gain.gain.value = (state.breakVolume/100) * ambMult(); }catch(e){} }
+  }
+  function previewBreakSound(){
+    startAmbient();
+    if(!(state.running && state.phase === "break") && state.breakSound !== "off"){
+      previewTimer = setTimeout(stopAmbient, 4000);   // short preview when idle
+    }
+  }
+
   // ---- Notifications ----
   function requestNotif(){
     if(!("Notification" in window)) return;
@@ -1105,6 +1217,7 @@
         logSession(state.workMin);   // a focus session just completed
         rotateTip(true);
         soundBreakStart();
+        startAmbient();              // ambient sound during the break
         notify(t("breakBody1") + state.breakMin + t("breakBody2"));
       }
     }else{
@@ -1112,6 +1225,7 @@
       state.phase = "work";
       state.cycle += 1;
       if(!silent){
+        stopAmbient();              // break ended
         rotateTip(true);
         soundBreakEnd();
         notify(t("workBody"));
@@ -1147,6 +1261,7 @@
     state.running = true;
     state.endAt = Date.now() + state.remaining*1000;
     requestWakeLock();
+    if(state.phase === "break") startAmbient();   // resume ambient if a break was paused
     if(tickHandle) clearInterval(tickHandle);
     tickHandle = setInterval(tick, 250);
     render(); save();
@@ -1159,6 +1274,7 @@
     state.endAt = null;
     if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
     releaseWakeLock();
+    stopAmbient();
     render(); maybePreAlert(); save();
   }
   function reset(){
@@ -1170,6 +1286,7 @@
     state.endAt = null;
     state.remaining = phaseDuration("work");
     warned = false;
+    stopAmbient();
     render(); maybePreAlert(); save();
   }
 
@@ -1224,12 +1341,16 @@
       wrap.className = "day";
       let slotsHtml = "";
       slots.forEach((s,i)=>{
+        const scat = s.cat || "work";
+        const opts = CATEGORIES.filter(c=>state.catEnabled[c.id]).map(c=>
+          '<option value="'+c.id+'"'+(scat===c.id?' selected':'')+'>'+c.icon+' '+t(c.k)+'</option>').join('');
         slotsHtml +=
           '<div class="slot" data-day="'+day+'" data-idx="'+i+'">'+
             '<input type="time" data-which="start" value="'+(s.start||"")+'">'+
             '<span class="sep">–</span>'+
             '<input type="time" data-which="end" value="'+(s.end||"")+'">'+
             '<button type="button" class="rm" title="'+t("remove")+'">✕</button>'+
+            '<select class="slot-cat">'+opts+'</select>'+
           '</div>';
       });
       wrap.innerHTML =
@@ -1240,8 +1361,9 @@
     });
   }
 
-  function scheduleStartFresh(){
+  function scheduleStartFresh(cat){
     if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
+    if(cat && state.catEnabled[cat]){ state.category = cat; renderCategories(); }
     state.phase = "work";
     state.cycle = 1;
     state.remaining = phaseDuration("work");
@@ -1258,15 +1380,15 @@
     const cur = d.getHours()*60 + d.getMinutes();
     const slots = state.schedule.days[day] || [];
 
-    let activeKey = null, activeEnd = null;
+    let activeKey = null, activeEnd = null, activeCat = null;
     for(let i=0;i<slots.length;i++){
       const a = toMin(slots[i].start), b = toMin(slots[i].end);
-      if(a!=null && b!=null && b>a && cur>=a && cur<b){ activeKey = day+"-"+i; activeEnd = b; break; }
+      if(a!=null && b!=null && b>a && cur>=a && cur<b){ activeKey = day+"-"+i; activeEnd = b; activeCat = slots[i].cat; break; }
     }
 
     if(activeKey && activeKey !== lastSlotKey){
       lastSlotKey = activeKey;          // a slot just became active (or app opened mid-slot)
-      scheduleStartFresh();
+      scheduleStartFresh(activeCat);
     }else if(!activeKey && lastSlotKey){
       lastSlotKey = null;               // slot just ended
       if(state.running) pause();
@@ -1359,6 +1481,7 @@
     render();
     renderSchedule();
     renderCategories();
+    renderCatToggles();
     renderProgress();
     rotateTip(false);
     updateStatus();
@@ -1408,6 +1531,36 @@
     save();
   });
 
+  // break ambient sound
+  function syncBreakSound(){
+    el.breakSoundOpts.querySelectorAll("button").forEach(b=>{ b.classList.toggle("active", b.dataset.bs===state.breakSound); });
+    el.breakVol.value = state.breakVolume;
+  }
+  el.breakSoundOpts.addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-bs]");
+    if(!b) return;
+    state.breakSound = b.dataset.bs;
+    syncBreakSound();
+    save();
+    previewBreakSound();
+  });
+  el.breakVol.addEventListener("input", ()=>{
+    state.breakVolume = parseInt(el.breakVol.value,10) || 0;
+    setAmbientVolume();
+    save();
+  });
+
+  // category enable/disable
+  el.catToggles.addEventListener("change", (e)=>{
+    const inp = e.target.closest("input[data-caten]");
+    if(!inp) return;
+    state.catEnabled[inp.dataset.caten] = inp.checked;
+    if(!state.catEnabled[state.category]){ const f=CATEGORIES.find(c=>state.catEnabled[c.id]); if(f) state.category=f.id; }
+    renderCategories();
+    renderSchedule();
+    save();
+  });
+
   // theme picker
   el.themeGrid.addEventListener("click", (e)=>{
     const b = e.target.closest(".theme-sw");
@@ -1428,7 +1581,7 @@
     const add = e.target.closest(".addslot");
     if(add){
       const day = parseInt(add.dataset.day,10);
-      (state.schedule.days[day] = state.schedule.days[day] || []).push({start:"08:00", end:"12:00"});
+      (state.schedule.days[day] = state.schedule.days[day] || []).push({start:"08:00", end:"12:00", cat:state.category});
       lastSlotKey = null; renderSchedule(); save(); schedulerCheck();
       return;
     }
@@ -1441,11 +1594,14 @@
     }
   });
   el.schedDays.addEventListener("change", (e)=>{
-    const inp = e.target.closest('input[type="time"]');
-    if(!inp) return;
-    const slot = inp.closest(".slot");
+    const slot = e.target.closest(".slot");
+    if(!slot) return;
     const day = parseInt(slot.dataset.day,10), idx = parseInt(slot.dataset.idx,10);
-    state.schedule.days[day][idx][inp.dataset.which] = inp.value;
+    if(e.target.matches('input[type="time"]')){
+      state.schedule.days[day][idx][e.target.dataset.which] = e.target.value;
+    } else if(e.target.matches('select.slot-cat')){
+      state.schedule.days[day][idx].cat = e.target.value;
+    } else { return; }
     lastSlotKey = null; save(); schedulerCheck();
   });
 
@@ -1497,8 +1653,15 @@
   if(typeof state.home.times !== "boolean") state.home.times = false;
   if(typeof state.home.tips !== "boolean") state.home.tips = true;
   if(!CATEGORIES.some(c=>c.id===state.category)) state.category = "work";
+  if(["off","white","brown","binaural","rain"].indexOf(state.breakSound) < 0) state.breakSound = "off";
+  if(typeof state.breakVolume !== "number") state.breakVolume = 40;
+  if(!state.catEnabled || typeof state.catEnabled !== "object") state.catEnabled = {};
+  CATEGORIES.forEach(c=>{ if(typeof state.catEnabled[c.id] !== "boolean") state.catEnabled[c.id] = true; });
+  if(!state.catEnabled[state.category]){ const f=CATEGORIES.find(c=>state.catEnabled[c.id]); if(f) state.category=f.id; }
   renderThemeGrid();
   applyTheme(state.theme);
+  syncBreakSound();
+  renderCatToggles();
   renderCategories();
   renderProgress();
   applyHomeLayout();
