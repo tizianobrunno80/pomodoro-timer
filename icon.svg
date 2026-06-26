@@ -1,10 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
-  <circle cx="256" cy="280" r="150" fill="none" stroke="#1d1d1d" stroke-width="26"/>
-  <circle cx="256" cy="280" r="150" fill="none" stroke="#ff7a18" stroke-width="26"
-          stroke-linecap="round" stroke-dasharray="942" stroke-dashoffset="300"
-          transform="rotate(-90 256 280)"/>
-  <path d="M256 150 v130 l86 50" fill="none" stroke="#ff7a18" stroke-width="26"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="206" y="60" width="100" height="34" rx="17" fill="#ff7a18"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="36%" r="78%">
+      <stop offset="0%" stop-color="#262626"/>
+      <stop offset="100%" stop-color="#121212"/>
+    </radialGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB24D"/>
+      <stop offset="52%" stop-color="#FF6200"/>
+      <stop offset="100%" stop-color="#E04E00"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+
+  <!-- timer ring -->
+  <circle cx="512" cy="512" r="330" fill="none" stroke="#2c2c2c" stroke-width="48"/>
+  <circle cx="512" cy="512" r="330" fill="none" stroke="#FF6200" stroke-width="48"
+          stroke-linecap="round" stroke-dasharray="1555 2074"
+          transform="rotate(-90 512 512)"/>
+  <!-- start dot -->
+  <circle cx="512" cy="182" r="26" fill="#FF6200"/>
+
+  <!-- lightning bolt (Thunder mark) -->
+  <path filter="url(#glow)" fill="url(#bolt)"
+        d="M600 168 L348 566 L488 566 L426 856 L688 458 L548 458 Z"/>
 </svg>

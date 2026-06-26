@@ -218,7 +218,14 @@
     letter-spacing:.04em;
   }
   .status a{color:var(--orange-soft);cursor:pointer;text-decoration:underline}
-  footer{text-align:center;font-size:.72rem;color:#555;padding-bottom:8px}
+  footer{text-align:center;font-size:.72rem;color:#555;padding:6px 0 16px}
+  footer .hint-line{margin-bottom:9px}
+  .powered{display:inline-flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none}
+  .powered .pb{font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:#8a8a8a}
+  .powered .wm{font-size:.98rem;font-weight:800;letter-spacing:.07em}
+  .powered .wm .o{color:#FF6200}
+  .powered .wm .w{color:#F5F5F5}
+  .powered:active{opacity:.65}
 </style>
 </head>
 <body>
@@ -287,7 +294,13 @@
   </div>
 
   <div class="status" id="status"></div>
-  <footer>Funziona offline · Aggiungi alla home per installare</footer>
+  <footer>
+    <div class="hint-line">Funziona offline · Aggiungi alla home per installare</div>
+    <a class="powered" href="https://thethundertrader.com" target="_blank" rel="noopener noreferrer">
+      <span class="pb">powered by</span>
+      <span class="wm"><span class="o">THE</span> <span class="w">THUNDER</span> <span class="o">TRADER</span></span>
+    </a>
+  </footer>
 </div>
 
 <script>
