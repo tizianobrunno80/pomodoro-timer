@@ -153,6 +153,7 @@
   }
   .field{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .field label{font-size:.95rem}
+  .field-note{font-size:.72rem;font-style:italic;color:var(--muted);line-height:1.45;margin:-4px 0 2px}
   .stepper{display:flex;align-items:center;gap:8px}
   .stepper button{
     flex:0 0 auto;
@@ -260,6 +261,19 @@
   .badge.on{opacity:1;filter:none;border-color:var(--orange)}
   .badge .bi{font-size:1.5rem;line-height:1}
   .badge .bl{font-size:.62rem;color:var(--muted);font-weight:700}
+  .cat-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none}
+  .cat-row::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;
+    background:var(--bg-2);border:1.5px solid #2a2a2a;color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap}
+  .chip .ci{font-size:1rem;line-height:1}
+  .chip.active{color:var(--txt)}
+  .cat-legend{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .cat-leg{display:flex;align-items:center;gap:8px;font-size:.82rem}
+  .cat-leg .cd{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .cat-leg .cln{flex:1;color:var(--txt)}
+  .cat-leg .clv{color:var(--muted);font-variant-numeric:tabular-nums}
+  .donut-wrap{display:flex;justify-content:center;margin-top:4px}
+  .donut-wrap svg{width:150px;height:150px}
   .status{
     text-align:center;
     font-size:.78rem;
@@ -311,6 +325,8 @@
     </div>
   </div>
 
+  <div class="cat-row" id="catRow"></div>
+
   <div class="tip" id="tip"></div>
 
   <div id="homeSlot"></div>
@@ -340,6 +356,9 @@
     <div class="chart-box" id="chartHist"></div>
     <div class="chart-title" data-i18n="chartEquity">Curva focus cumulata</div>
     <div class="chart-box" id="chartEquity"></div>
+    <div class="chart-title" data-i18n="chartCategory">Per categoria</div>
+    <div class="donut-wrap" id="catDonut"></div>
+    <div class="cat-legend" id="catLegend"></div>
     </div>
     </div>
 
@@ -399,6 +418,10 @@
 
     <div class="settings">
       <h2 data-i18n="homeSections">Sezioni in home</h2>
+      <div class="field">
+        <label data-i18n="categories">Categorie</label>
+        <label class="switch"><input type="checkbox" id="homeCategory"><span class="slider"></span></label>
+      </div>
       <div class="field">
         <label data-i18n="statistics">Statistiche</label>
         <label class="switch"><input type="checkbox" id="homeStats"><span class="slider"></span></label>
@@ -460,6 +483,7 @@
           <button data-step="15" data-target="goalMinutes" aria-label="più">+</button>
         </div>
       </div>
+      <div class="field-note" data-i18n="goalsHint">Obiettivi giornalieri: quante sessioni e quanti minuti di focus vuoi fare al giorno. I progressi sono nella schermata Progressi 📊.</div>
     </div>
 
   <div class="settings">
@@ -510,6 +534,10 @@
     preAlertOn: $("preAlertOn"),
     preAlert: $("preAlert"),
     tip: $("tip"),
+    catRow: $("catRow"),
+    catDonut: $("catDonut"),
+    catLegend: $("catLegend"),
+    homeCategory: $("homeCategory"),
     homeSlot: $("homeSlot"),
     statsDefault: $("statsDefault"),
     statsCard: $("statsCard"),
@@ -566,7 +594,8 @@
     theme: "dark1",       // selected theme id
     goalSessions: 8,      // daily target: focus sessions
     goalMinutes: 120,     // daily target: focus minutes
-    home: { stats:false, times:false, tips:true },  // which sections show on the home screen
+    category: "work",     // current activity category for logged sessions
+    home: { category:true, stats:false, times:false, tips:true },  // which sections show on the home screen
     sessions: [],         // completed focus sessions: [{t: epochMs, mins: focusMinutes}]
     statPeriod: "today",  // stats view: today | week | month | all
     endAt: null,          // timestamp ms when current phase ends (only while running)
@@ -603,6 +632,8 @@
       theme:"Tema", general:"Generali", preAlertLabel:"Avviso 15s pre-cambio", chartFocus:"Focus per giorno", chartEquity:"Curva focus cumulata",
       progress:"Progressi", goals:"Obiettivi di oggi", achievements:"Obiettivi raggiunti", streakDays:"giorni di fila", goalSessTarget:"Obiettivo sessioni/giorno", goalTimeTarget:"Obiettivo minuti/giorno",
       times:"Tempi", homeSections:"Sezioni in home", tips:"Frasi motivazionali",
+      goalsHint:"Obiettivi giornalieri: quante sessioni e quanti minuti di focus vuoi fare al giorno. I progressi sono nella schermata Progressi 📊.",
+      categories:"Categorie", chartCategory:"Per categoria", catStudy:"Studio", catWork:"Lavoro", catSport:"Sport", catTraining:"Allenamento", catRelax:"Relax", catFree:"Tempo libero",
       days:["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
     },
     en: {
@@ -626,6 +657,8 @@
       theme:"Theme", general:"General", preAlertLabel:"15s pre-change alert", chartFocus:"Focus per day", chartEquity:"Cumulative focus curve",
       progress:"Progress", goals:"Today's goals", achievements:"Achievements", streakDays:"day streak", goalSessTarget:"Daily sessions goal", goalTimeTarget:"Daily minutes goal",
       times:"Times", homeSections:"Home sections", tips:"Motivational quotes",
+      goalsHint:"Daily goals: how many focus sessions and minutes you aim for each day. Track them in the Progress screen 📊.",
+      categories:"Categories", chartCategory:"By category", catStudy:"Study", catWork:"Work", catSport:"Sport", catTraining:"Training", catRelax:"Relax", catFree:"Free time",
       days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     },
     es: {
@@ -649,6 +682,8 @@
       theme:"Tema", general:"General", preAlertLabel:"Aviso 15s antes del cambio", chartFocus:"Focus por día", chartEquity:"Curva de focus acumulado",
       progress:"Progreso", goals:"Objetivos de hoy", achievements:"Logros", streakDays:"días seguidos", goalSessTarget:"Meta sesiones/día", goalTimeTarget:"Meta minutos/día",
       times:"Tiempos", homeSections:"Secciones en inicio", tips:"Frases motivadoras",
+      goalsHint:"Objetivos diarios: cuántas sesiones y minutos de focus quieres hacer al día. Míralos en la pantalla Progreso 📊.",
+      categories:"Categorías", chartCategory:"Por categoría", catStudy:"Estudio", catWork:"Trabajo", catSport:"Deporte", catTraining:"Entrenamiento", catRelax:"Relax", catFree:"Tiempo libre",
       days:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
     }
   };
@@ -745,7 +780,7 @@
   }
   function logSession(mins){
     if(!Array.isArray(state.sessions)) state.sessions = [];
-    state.sessions.push({ t: Date.now(), mins: mins });
+    state.sessions.push({ t: Date.now(), mins: mins, cat: state.category });
     if(state.sessions.length > 2000) state.sessions = state.sessions.slice(-2000);
     renderProgress();
   }
@@ -887,13 +922,52 @@
       el.badgeGrid.appendChild(d);
     });
   }
-  function renderProgress(){ renderStats(); renderGoals(); renderAchievements(); }
+  // ---- Categories ----
+  const CATEGORIES = [
+    { id:"study",    icon:"📚", color:"#4a90d9", k:"catStudy" },
+    { id:"work",     icon:"💼", color:"#ff7a18", k:"catWork" },
+    { id:"sport",    icon:"⚽", color:"#37A05A", k:"catSport" },
+    { id:"training", icon:"🏋️", color:"#E0556A", k:"catTraining" },
+    { id:"relax",    icon:"🧘", color:"#9b6dde", k:"catRelax" },
+    { id:"free",     icon:"☕", color:"#d9a441", k:"catFree" }
+  ];
+  function renderCategories(){
+    el.catRow.innerHTML = "";
+    CATEGORIES.forEach(c=>{
+      const chip = document.createElement("div");
+      chip.className = "chip" + (c.id===state.category ? " active" : "");
+      chip.dataset.cat = c.id;
+      if(c.id===state.category) chip.style.borderColor = c.color;
+      chip.innerHTML = '<span class="ci">'+c.icon+'</span>'+t(c.k);
+      el.catRow.appendChild(chip);
+    });
+  }
+  function renderCategoryChart(){
+    const from = periodStart(state.statPeriod);
+    const sums = {}; let total = 0;
+    (state.sessions||[]).forEach(s=>{ if(s && s.t >= from){ const c=s.cat||"work", m=(s.mins||0); sums[c]=(sums[c]||0)+m; total+=m; } });
+    if(total <= 0){ el.catDonut.innerHTML = ""; el.catLegend.innerHTML = ""; return; }
+    const r=42, C=2*Math.PI*r; let off=0, svg='<svg viewBox="0 0 100 100"><g transform="rotate(-90 50 50)">', legend='';
+    CATEGORIES.forEach(c=>{
+      const m = sums[c.id]||0; if(m<=0) return;
+      const frac=m/total, seg=frac*C;
+      svg += '<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="'+c.color+'" stroke-width="16" stroke-dasharray="'+seg.toFixed(2)+' '+(C-seg).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'"/>';
+      off += seg;
+      legend += '<div class="cat-leg"><span class="cd" style="background:'+c.color+'"></span><span class="cln">'+t(c.k)+'</span><span class="clv">'+fmtDur(m*60)+' · '+Math.round(frac*100)+'%</span></div>';
+    });
+    svg += '</g></svg>';
+    el.catDonut.innerHTML = svg;
+    el.catLegend.innerHTML = legend;
+  }
+  function renderProgress(){ renderStats(); renderGoals(); renderAchievements(); renderCategoryChart(); }
 
   // ---- Home layout (which sections show on the main screen) ----
   function applyHomeLayout(){
+    el.catRow.style.display = state.home.category ? "" : "none";
     el.tip.style.display = state.home.tips ? "" : "none";
     (state.home.times ? el.homeSlot : el.timesDefault).appendChild(el.timesCard);
     (state.home.stats ? el.homeSlot : el.statsDefault).appendChild(el.statsCard);
+    el.homeCategory.checked = state.home.category;
     el.homeStats.checked = state.home.stats;
     el.homeTimes.checked = state.home.times;
     el.homeTips.checked = state.home.tips;
@@ -1284,7 +1358,8 @@
     applyI18n();
     render();
     renderSchedule();
-    renderStats();
+    renderCategories();
+    renderProgress();
     rotateTip(false);
     updateStatus();
     schedulerCheck();
@@ -1319,9 +1394,19 @@
   el.progClose.addEventListener("click", ()=>{ el.progressSheet.classList.remove("open"); });
 
   // home section toggles
+  el.homeCategory.addEventListener("change", ()=>{ state.home.category = el.homeCategory.checked; applyHomeLayout(); save(); });
   el.homeStats.addEventListener("change", ()=>{ state.home.stats = el.homeStats.checked; applyHomeLayout(); renderProgress(); save(); });
   el.homeTimes.addEventListener("change", ()=>{ state.home.times = el.homeTimes.checked; applyHomeLayout(); save(); });
   el.homeTips.addEventListener("change", ()=>{ state.home.tips = el.homeTips.checked; applyHomeLayout(); save(); });
+
+  // category selection
+  el.catRow.addEventListener("click", (e)=>{
+    const chip = e.target.closest(".chip");
+    if(!chip) return;
+    state.category = chip.dataset.cat;
+    renderCategories();
+    save();
+  });
 
   // theme picker
   el.themeGrid.addEventListener("click", (e)=>{
@@ -1406,12 +1491,15 @@
   el.preAlertOn.checked = state.preAlertOn;
   el.goalSessions.value = state.goalSessions;
   el.goalMinutes.value = state.goalMinutes;
-  if(!state.home || typeof state.home !== "object") state.home = { stats:false, times:false, tips:true };
+  if(!state.home || typeof state.home !== "object") state.home = { category:true, stats:false, times:false, tips:true };
+  if(typeof state.home.category !== "boolean") state.home.category = true;
   if(typeof state.home.stats !== "boolean") state.home.stats = false;
   if(typeof state.home.times !== "boolean") state.home.times = false;
   if(typeof state.home.tips !== "boolean") state.home.tips = true;
+  if(!CATEGORIES.some(c=>c.id===state.category)) state.category = "work";
   renderThemeGrid();
   applyTheme(state.theme);
+  renderCategories();
   renderProgress();
   applyHomeLayout();
   rotateTip(false);
