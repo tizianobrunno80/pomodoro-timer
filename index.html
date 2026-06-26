@@ -210,6 +210,18 @@
     background:var(--bg-3);color:#c66;font-size:1rem;line-height:1;
   }
   .slot.active input[type=time]{border-color:var(--orange)}
+  .pre-alert{font-size:.72rem;font-weight:700;color:var(--orange);letter-spacing:.06em;min-height:1em;opacity:0;transition:opacity .3s}
+  .pre-alert.show{opacity:1;animation:pulse 1s ease-in-out infinite}
+  body.phase-break .pre-alert{color:var(--break)}
+  @keyframes pulse{50%{opacity:.35}}
+  .tip{text-align:center;font-size:.82rem;color:#9a9a9a;font-style:italic;line-height:1.5;min-height:2.5em;
+    padding:0 8px;transition:opacity .4s ease;display:flex;align-items:center;justify-content:center}
+  #statSeg{width:100%}
+  #statSeg button{flex:1;padding:8px 4px;font-size:.76rem;text-align:center}
+  .stat-grid{display:flex;gap:10px}
+  .stat{flex:1;background:var(--bg);border:1px solid #242424;border-radius:14px;padding:14px 6px;text-align:center}
+  .stat .sv{font-size:1.45rem;font-weight:800;color:var(--orange-soft);font-variant-numeric:tabular-nums}
+  .stat .sl{font-size:.66rem;color:var(--muted);margin-top:5px;letter-spacing:.02em}
   .status{
     text-align:center;
     font-size:.78rem;
@@ -243,6 +255,7 @@
       <div class="time">
         <div class="digits" id="digits">55:00</div>
         <div class="cyc" id="cycle">Ciclo 1</div>
+        <div class="pre-alert" id="preAlert"></div>
       </div>
     </div>
 
@@ -250,6 +263,23 @@
       <button class="primary" id="startBtn">Start</button>
       <button id="pauseBtn" disabled>Stop</button>
       <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <div class="tip" id="tip"></div>
+
+  <div class="settings stats-card">
+    <h2 data-i18n="statistics">Statistiche</h2>
+    <div class="seg" id="statSeg">
+      <button type="button" data-period="today" data-i18n="periodToday">Oggi</button>
+      <button type="button" data-period="week" data-i18n="periodWeek">Settimana</button>
+      <button type="button" data-period="month" data-i18n="periodMonth">Mese</button>
+      <button type="button" data-period="all" data-i18n="periodAll">Totale</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="sv" id="stSessions">0</div><div class="sl" data-i18n="statSessions">Sessioni</div></div>
+      <div class="stat"><div class="sv" id="stTime">0m</div><div class="sl" data-i18n="statFocusTime">Tempo focus</div></div>
+      <div class="stat"><div class="sv" id="stAvg">0m</div><div class="sl" data-i18n="statAvg">Media sessione</div></div>
     </div>
   </div>
 
@@ -285,6 +315,13 @@
         <button type="button" data-sec="5">5 sec</button>
         <button type="button" data-sec="10">10 sec</button>
       </div>
+    </div>
+    <div class="field">
+      <label data-i18n="keepAwake">Tieni schermo acceso</label>
+      <label class="switch">
+        <input type="checkbox" id="keepAwake">
+        <span class="slider"></span>
+      </label>
     </div>
   </div>
 
@@ -329,6 +366,13 @@
     brk: $("breakMin"),
     soundSeg: $("soundSeg"),
     langSeg: $("langSeg"),
+    keepAwake: $("keepAwake"),
+    preAlert: $("preAlert"),
+    tip: $("tip"),
+    statSeg: $("statSeg"),
+    stSessions: $("stSessions"),
+    stTime: $("stTime"),
+    stAvg: $("stAvg"),
     schedEnabled: $("schedEnabled"),
     schedDays: $("schedDays"),
     schedStatus: $("schedStatus"),
@@ -351,6 +395,9 @@
     workMin: defaults.workMin,
     breakMin: defaults.breakMin,
     soundSec: defaults.soundSec,    // 5 or 10 — chime duration at phase change
+    keepAwake: true,      // Screen Wake Lock on/off
+    sessions: [],         // completed focus sessions: [{t: epochMs, mins: focusMinutes}]
+    statPeriod: "today",  // stats view: today | week | month | all
     endAt: null,          // timestamp ms when current phase ends (only while running)
     schedule: {           // automatic on/off windows
       enabled: false,
@@ -379,6 +426,9 @@
       notifBlocked:"Notifiche bloccate dal browser (il timer funziona comunque).",
       notifAskPre:"Per gli avvisi: ", notifAskLink:"abilita le notifiche",
       notifUnsupported:"Notifiche non supportate da questo browser.",
+      statistics:"Statistiche", periodToday:"Oggi", periodWeek:"Settimana", periodMonth:"Mese", periodAll:"Totale",
+      statSessions:"Sessioni", statFocusTime:"Tempo focus", statAvg:"Media sessione",
+      keepAwake:"Tieni schermo acceso", preAlertBreak:"Pausa tra 15s", preAlertWork:"Lavoro tra 15s",
       days:["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
     },
     en: {
@@ -396,6 +446,9 @@
       notifBlocked:"Notifications blocked by the browser (the timer still works).",
       notifAskPre:"For alerts: ", notifAskLink:"enable notifications",
       notifUnsupported:"Notifications not supported by this browser.",
+      statistics:"Statistics", periodToday:"Today", periodWeek:"Week", periodMonth:"Month", periodAll:"Total",
+      statSessions:"Sessions", statFocusTime:"Focus time", statAvg:"Avg session",
+      keepAwake:"Keep screen awake", preAlertBreak:"Break in 15s", preAlertWork:"Work in 15s",
       days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     },
     es: {
@@ -413,6 +466,9 @@
       notifBlocked:"Notificaciones bloqueadas por el navegador (el temporizador funciona igual).",
       notifAskPre:"Para los avisos: ", notifAskLink:"activar las notificaciones",
       notifUnsupported:"Notificaciones no soportadas por este navegador.",
+      statistics:"Estadísticas", periodToday:"Hoy", periodWeek:"Semana", periodMonth:"Mes", periodAll:"Total",
+      statSessions:"Sesiones", statFocusTime:"Tiempo focus", statAvg:"Media sesión",
+      keepAwake:"Mantener pantalla activa", preAlertBreak:"Pausa en 15s", preAlertWork:"Trabajo en 15s",
       days:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
     }
   };
@@ -434,6 +490,97 @@
       elm.textContent = t(elm.getAttribute("data-i18n"));
     });
     syncLangSeg();
+  }
+
+  // ---- Quotes / tips (rotating mindset: performance, time, emotions) ----
+  const QUOTES = {
+    it: [
+      "Il mercato premia la pazienza, non la fretta. Lo stesso vale per il lavoro profondo.",
+      "Non puoi controllare il risultato, solo il processo. Concentrati su quello.",
+      "Una sessione alla volta. La costanza batte l'intensità.",
+      "La disciplina è scegliere ciò che vuoi di più rispetto a ciò che vuoi adesso.",
+      "Le pause non sono tempo perso: sono parte della performance.",
+      "Respira. Una mente calma prende decisioni migliori.",
+      "Il talento apre la porta, l'abitudine la tiene aperta.",
+      "Proteggi la tua energia come proteggi il tuo capitale.",
+      "Fai la cosa difficile quando è facile farla: adesso.",
+      "Vinci la giornata e le settimane si vincono da sole."
+    ],
+    en: [
+      "The market rewards patience, not haste. So does deep work.",
+      "You can't control the outcome, only the process. Focus on that.",
+      "One session at a time. Consistency beats intensity.",
+      "Discipline is choosing what you want most over what you want now.",
+      "Breaks aren't wasted time — they're part of performance.",
+      "Breathe. A calm mind makes better decisions.",
+      "Talent opens the door; habit keeps it open.",
+      "Protect your energy like you protect your capital.",
+      "Do the hard thing while it's easy: now.",
+      "Win the day, and the weeks win themselves."
+    ],
+    es: [
+      "El mercado premia la paciencia, no la prisa. El trabajo profundo también.",
+      "No controlas el resultado, solo el proceso. Concéntrate en eso.",
+      "Una sesión a la vez. La constancia vence a la intensidad.",
+      "La disciplina es elegir lo que más quieres sobre lo que quieres ahora.",
+      "Las pausas no son tiempo perdido: son parte del rendimiento.",
+      "Respira. Una mente en calma decide mejor.",
+      "El talento abre la puerta; el hábito la mantiene abierta.",
+      "Protege tu energía como proteges tu capital.",
+      "Haz lo difícil cuando es fácil hacerlo: ahora.",
+      "Gana el día y las semanas se ganan solas."
+    ]
+  };
+  let tipIdx = 0;
+  function rotateTip(advance){
+    const arr = QUOTES[state.lang] || QUOTES.it;
+    if(advance) tipIdx = (tipIdx + 1) % arr.length;
+    else tipIdx = tipIdx % arr.length;
+    if(!el.tip) return;
+    el.tip.style.opacity = 0;
+    setTimeout(()=>{ el.tip.textContent = "“" + arr[tipIdx] + "”"; el.tip.style.opacity = 1; }, 250);
+  }
+
+  // ---- Stats ----
+  function periodStart(period){
+    const d = new Date();
+    if(period === "today"){ d.setHours(0,0,0,0); return d.getTime(); }
+    if(period === "week"){ const wd=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-wd); return d.getTime(); }
+    if(period === "month"){ d.setHours(0,0,0,0); d.setDate(1); return d.getTime(); }
+    return 0; // all
+  }
+  function fmtDur(sec){
+    const h = Math.floor(sec/3600), m = Math.round((sec%3600)/60);
+    return h>0 ? (h+"h "+m+"m") : (m+"m");
+  }
+  function renderStats(){
+    const from = periodStart(state.statPeriod);
+    let count = 0, totalSec = 0;
+    (state.sessions||[]).forEach(s=>{ if(s && s.t >= from){ count++; totalSec += (s.mins||0)*60; } });
+    el.stSessions.textContent = count;
+    el.stTime.textContent = fmtDur(totalSec);
+    el.stAvg.textContent = fmtDur(count ? Math.round(totalSec/count) : 0);
+    el.statSeg.querySelectorAll("button").forEach(b=>{ b.classList.toggle("active", b.dataset.period === state.statPeriod); });
+  }
+  function logSession(mins){
+    if(!Array.isArray(state.sessions)) state.sessions = [];
+    state.sessions.push({ t: Date.now(), mins: mins });
+    if(state.sessions.length > 2000) state.sessions = state.sessions.slice(-2000);
+    renderStats();
+  }
+
+  // ---- 15s pre-change alert ----
+  let warned = false;
+  function maybePreAlert(){
+    if(state.running && state.remaining <= 15 && state.remaining > 0){
+      el.preAlert.textContent = "↻ " + (state.phase === "work" ? t("preAlertBreak") : t("preAlertWork"));
+      el.preAlert.classList.add("show");
+      if(!warned){ warned = true; bell([880], 0, 0.18); }   // soft single tick at the 15s mark
+    }else{
+      el.preAlert.classList.remove("show");
+      el.preAlert.textContent = "";
+      warned = false;
+    }
   }
 
   // ---- Persistence ----
@@ -538,6 +685,7 @@
 
   // ---- Wake Lock ----
   async function requestWakeLock(){
+    if(!state.keepAwake) return;
     if(!("wakeLock" in navigator)) return;
     try{
       wakeLock = await navigator.wakeLock.request("screen");
@@ -564,6 +712,8 @@
       // work -> break
       state.phase = "break";
       if(!silent){
+        logSession(state.workMin);   // a focus session just completed
+        rotateTip(true);
         soundBreakStart();
         notify(t("breakBody1") + state.breakMin + t("breakBody2"));
       }
@@ -572,6 +722,7 @@
       state.phase = "work";
       state.cycle += 1;
       if(!silent){
+        rotateTip(true);
         soundBreakEnd();
         notify(t("workBody"));
       }
@@ -594,6 +745,7 @@
     }
     state.remaining = Math.max(0, Math.round((state.endAt - now)/1000));
     render();
+    maybePreAlert();
     save();
   }
 
@@ -617,7 +769,7 @@
     state.endAt = null;
     if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
     releaseWakeLock();
-    render(); save();
+    render(); maybePreAlert(); save();
   }
   function reset(){
     if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
@@ -627,7 +779,8 @@
     state.cycle = 1;
     state.endAt = null;
     state.remaining = phaseDuration("work");
-    render(); save();
+    warned = false;
+    render(); maybePreAlert(); save();
   }
 
   // ---- Settings ----
@@ -810,8 +963,25 @@
     applyI18n();
     render();
     renderSchedule();
+    renderStats();
+    rotateTip(false);
     updateStatus();
     schedulerCheck();
+  });
+
+  el.statSeg.addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-period]");
+    if(!b) return;
+    state.statPeriod = b.dataset.period;
+    renderStats();
+    save();
+  });
+
+  el.keepAwake.addEventListener("change", ()=>{
+    state.keepAwake = el.keepAwake.checked;
+    if(state.running && state.keepAwake) requestWakeLock();
+    if(!state.keepAwake) releaseWakeLock();
+    save();
   });
 
   el.schedEnabled.addEventListener("change", ()=>{
@@ -877,6 +1047,13 @@
   el.work.value = state.workMin;
   el.brk.value = state.breakMin;
   syncSoundSeg();
+  if(typeof state.keepAwake !== "boolean") state.keepAwake = true;
+  if(!Array.isArray(state.sessions)) state.sessions = [];
+  if(["today","week","month","all"].indexOf(state.statPeriod) < 0) state.statPeriod = "today";
+  el.keepAwake.checked = state.keepAwake;
+  renderStats();
+  rotateTip(false);
+  setInterval(()=>rotateTip(true), 22000);
   renderSchedule();
   setInterval(schedulerCheck, 1000);
   schedulerCheck();
