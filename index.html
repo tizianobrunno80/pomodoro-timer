@@ -254,9 +254,17 @@
   </div>
 
   <div class="settings">
-    <h2>Impostazioni</h2>
+    <h2 data-i18n="settings">Impostazioni</h2>
     <div class="field">
-      <label for="workMin">Minuti di lavoro</label>
+      <label data-i18n="language">Lingua</label>
+      <div class="seg" id="langSeg">
+        <button type="button" data-lang="it">IT</button>
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="es">ES</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="workMin" data-i18n="workMin">Minuti di lavoro</label>
       <div class="stepper">
         <button data-step="-1" data-target="workMin" aria-label="meno">−</button>
         <input type="number" id="workMin" min="1" max="180" value="55" inputmode="numeric">
@@ -264,7 +272,7 @@
       </div>
     </div>
     <div class="field">
-      <label for="breakMin">Minuti di pausa</label>
+      <label for="breakMin" data-i18n="breakMin">Minuti di pausa</label>
       <div class="stepper">
         <button data-step="-1" data-target="breakMin" aria-label="meno">−</button>
         <input type="number" id="breakMin" min="1" max="120" value="5" inputmode="numeric">
@@ -272,7 +280,7 @@
       </div>
     </div>
     <div class="field">
-      <label for="soundSec">Durata suono</label>
+      <label for="soundSec" data-i18n="soundDur">Durata suono</label>
       <div class="seg" id="soundSeg">
         <button type="button" data-sec="5">5 sec</button>
         <button type="button" data-sec="10">10 sec</button>
@@ -282,7 +290,7 @@
 
   <div class="settings">
     <div class="field">
-      <h2 style="margin:0">Programmazione orari</h2>
+      <h2 style="margin:0" data-i18n="schedule">Programmazione orari</h2>
       <label class="switch">
         <input type="checkbox" id="schedEnabled">
         <span class="slider"></span>
@@ -290,12 +298,12 @@
     </div>
     <div id="schedStatus" class="sched-status"></div>
     <div id="schedDays"></div>
-    <p class="sched-note">Aggiungi una o più fasce per giorno (es. 08:00–12:00, 14:00–16:00). Il timer parte e si ferma da solo dentro le fasce. <strong>Nota:</strong> ad app aperta. La versione da store potrà avvisarti anche a app chiusa.</p>
+    <p class="sched-note" data-i18n="schedNote">Aggiungi una o più fasce per giorno (es. 08:00–12:00, 14:00–16:00). Il timer parte e si ferma da solo dentro le fasce. Nota: ad app aperta. La versione da store potrà avvisarti anche a app chiusa.</p>
   </div>
 
   <div class="status" id="status"></div>
   <footer>
-    <div class="hint-line">Funziona offline · Aggiungi alla home per installare</div>
+    <div class="hint-line" data-i18n="offlineHint">Funziona offline · Aggiungi alla home per installare</div>
     <a class="powered" href="https://thethundertrader.com" target="_blank" rel="noopener noreferrer">
       <span class="pb">powered by</span>
       <span class="wm"><span class="o">THE</span> <span class="w">THUNDER</span> <span class="o">TRADER</span></span>
@@ -320,6 +328,7 @@
     work: $("workMin"),
     brk: $("breakMin"),
     soundSeg: $("soundSeg"),
+    langSeg: $("langSeg"),
     schedEnabled: $("schedEnabled"),
     schedDays: $("schedDays"),
     schedStatus: $("schedStatus"),
@@ -334,6 +343,7 @@
   // ---- State ----
   const defaults = { workMin:55, breakMin:5, soundSec:5 };
   let state = {
+    lang: null,           // "it" | "en" | "es" (auto-detected on first run)
     phase: "work",        // "work" | "break"
     cycle: 1,
     remaining: defaults.workMin*60, // seconds
@@ -351,6 +361,80 @@
 
   let tickHandle = null;
   let wakeLock = null;
+
+  // ---- i18n (IT / EN / ES) ----
+  const LANG = {
+    it: {
+      settings:"Impostazioni", language:"Lingua",
+      workMin:"Minuti di lavoro", breakMin:"Minuti di pausa", soundDur:"Durata suono",
+      schedule:"Programmazione orari",
+      schedNote:"Aggiungi una o più fasce per giorno (es. 08:00–12:00, 14:00–16:00). Il timer parte e si ferma da solo dentro le fasce. Nota: ad app aperta. La versione da store potrà avvisarti anche a app chiusa.",
+      offlineHint:"Funziona offline · Aggiungi alla home per installare",
+      work:"LAVORO", break:"PAUSA", cycle:"Ciclo", tWork:"Lavoro", tBreak:"Pausa",
+      addSlot:"+ fascia", remove:"Rimuovi",
+      schedActive:"● Attivo — sessione fino alle ", schedWaiting:"○ In attesa — ", schedNone:"○ Nessuna fascia programmata",
+      nextPrefix:"prossima ", nextAt:" alle ", today:"oggi", tomorrow:"domani",
+      breakBody1:"Fai una pausa di ", breakBody2:" minuti", workBody:"Si riprende a lavorare",
+      notifActive:"Notifiche attive · schermo tenuto acceso durante il timer.",
+      notifBlocked:"Notifiche bloccate dal browser (il timer funziona comunque).",
+      notifAskPre:"Per gli avvisi: ", notifAskLink:"abilita le notifiche",
+      notifUnsupported:"Notifiche non supportate da questo browser.",
+      days:["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
+    },
+    en: {
+      settings:"Settings", language:"Language",
+      workMin:"Work minutes", breakMin:"Break minutes", soundDur:"Sound duration",
+      schedule:"Schedule",
+      schedNote:"Add one or more time slots per day (e.g. 08:00–12:00, 14:00–16:00). The timer starts and stops automatically within the slots. Note: while the app is open. The store version can alert you even when closed.",
+      offlineHint:"Works offline · Add to home screen to install",
+      work:"WORK", break:"BREAK", cycle:"Cycle", tWork:"Work", tBreak:"Break",
+      addSlot:"+ slot", remove:"Remove",
+      schedActive:"● Active — session until ", schedWaiting:"○ Waiting — ", schedNone:"○ No slots scheduled",
+      nextPrefix:"next ", nextAt:" at ", today:"today", tomorrow:"tomorrow",
+      breakBody1:"Take a ", breakBody2:"-minute break", workBody:"Back to work",
+      notifActive:"Notifications on · screen kept awake while the timer runs.",
+      notifBlocked:"Notifications blocked by the browser (the timer still works).",
+      notifAskPre:"For alerts: ", notifAskLink:"enable notifications",
+      notifUnsupported:"Notifications not supported by this browser.",
+      days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+    },
+    es: {
+      settings:"Ajustes", language:"Idioma",
+      workMin:"Minutos de trabajo", breakMin:"Minutos de descanso", soundDur:"Duración del sonido",
+      schedule:"Programación horaria",
+      schedNote:"Añade una o más franjas por día (p. ej. 08:00–12:00, 14:00–16:00). El temporizador arranca y se detiene solo dentro de las franjas. Nota: con la app abierta. La versión de la tienda podrá avisarte incluso con la app cerrada.",
+      offlineHint:"Funciona sin conexión · Añádela a la pantalla de inicio",
+      work:"TRABAJO", break:"DESCANSO", cycle:"Ciclo", tWork:"Trabajo", tBreak:"Descanso",
+      addSlot:"+ franja", remove:"Quitar",
+      schedActive:"● Activo — sesión hasta las ", schedWaiting:"○ En espera — ", schedNone:"○ Ninguna franja programada",
+      nextPrefix:"próxima ", nextAt:" a las ", today:"hoy", tomorrow:"mañana",
+      breakBody1:"Haz una pausa de ", breakBody2:" minutos", workBody:"Volver al trabajo",
+      notifActive:"Notificaciones activas · pantalla encendida mientras corre el temporizador.",
+      notifBlocked:"Notificaciones bloqueadas por el navegador (el temporizador funciona igual).",
+      notifAskPre:"Para los avisos: ", notifAskLink:"activar las notificaciones",
+      notifUnsupported:"Notificaciones no soportadas por este navegador.",
+      days:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
+    }
+  };
+  function t(k){ return (LANG[state.lang] || LANG.it)[k]; }
+  function dayName(d){ return t("days")[d]; }
+  function detectLang(){
+    const l = (navigator.language || "it").slice(0,2).toLowerCase();
+    return (l === "en" || l === "es") ? l : "it";
+  }
+  function syncLangSeg(){
+    if(!el.langSeg) return;
+    el.langSeg.querySelectorAll("button").forEach(b=>{
+      b.classList.toggle("active", b.dataset.lang === state.lang);
+    });
+  }
+  function applyI18n(){
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-i18n]").forEach(elm=>{
+      elm.textContent = t(elm.getAttribute("data-i18n"));
+    });
+    syncLangSeg();
+  }
 
   // ---- Persistence ----
   function save(){
@@ -448,7 +532,7 @@
   function notify(text){
     if(!("Notification" in window) || Notification.permission !== "granted") return;
     try{
-      new Notification("Pomodoro Timer", { body:text, icon:"icon.svg", tag:"pomodoro", renotify:true });
+      new Notification("Thunder Focus", { body:text, icon:"icon.svg", tag:"pomodoro", renotify:true });
     }catch(e){ /* some platforms require SW notifications; ignore */ }
   }
 
@@ -481,7 +565,7 @@
       state.phase = "break";
       if(!silent){
         soundBreakStart();
-        notify("Fai una pausa di " + state.breakMin + " minuti");
+        notify(t("breakBody1") + state.breakMin + t("breakBody2"));
       }
     }else{
       // break -> work (new cycle)
@@ -489,7 +573,7 @@
       state.cycle += 1;
       if(!silent){
         soundBreakEnd();
-        notify("Si riprende a lavorare");
+        notify(t("workBody"));
       }
     }
     const dur = phaseDuration(state.phase);
@@ -567,7 +651,6 @@
   // ---- Scheduler ----
   // Display order Monday-first; storage keyed by JS getDay (0=Sun).
   const DAY_ORDER = [1,2,3,4,5,6,0];
-  const DAY_NAMES = {0:"Domenica",1:"Lunedì",2:"Martedì",3:"Mercoledì",4:"Giovedì",5:"Venerdì",6:"Sabato"};
   let lastSlotKey = null;   // not persisted: which scheduled slot is currently driving the timer
 
   function toMin(hhmm){
@@ -598,12 +681,12 @@
             '<input type="time" data-which="start" value="'+(s.start||"")+'">'+
             '<span class="sep">–</span>'+
             '<input type="time" data-which="end" value="'+(s.end||"")+'">'+
-            '<button type="button" class="rm" title="Rimuovi">✕</button>'+
+            '<button type="button" class="rm" title="'+t("remove")+'">✕</button>'+
           '</div>';
       });
       wrap.innerHTML =
-        '<div class="day-head"><span class="dname">'+DAY_NAMES[day]+'</span>'+
-        '<button type="button" class="addslot" data-day="'+day+'">+ fascia</button></div>'+
+        '<div class="day-head"><span class="dname">'+dayName(day)+'</span>'+
+        '<button type="button" class="addslot" data-day="'+day+'">'+t("addSlot")+'</button></div>'+
         '<div class="slots">'+slotsHtml+'</div>';
       el.schedDays.appendChild(wrap);
     });
@@ -643,10 +726,10 @@
 
     // status line
     if(activeEnd != null){
-      el.schedStatus.textContent = "● Attivo — sessione fino alle " + minToHHMM(activeEnd);
+      el.schedStatus.textContent = t("schedActive") + minToHHMM(activeEnd);
     }else{
       const next = nextSlotText(d);
-      el.schedStatus.textContent = next ? "○ In attesa — " + next : "○ Nessuna fascia programmata";
+      el.schedStatus.textContent = next ? t("schedWaiting") + next : t("schedNone");
     }
   }
 
@@ -660,8 +743,8 @@
         .map(s=>toMin(s.start)).filter(v=>v!=null).sort((a,b)=>a-b);
       for(const a of slots){
         if(off>0 || a>curMin){
-          const when = off===0 ? "oggi" : (off===1 ? "domani" : DAY_NAMES[day]);
-          return "prossima " + when + " alle " + minToHHMM(a);
+          const when = off===0 ? t("today") : (off===1 ? t("tomorrow") : dayName(day));
+          return t("nextPrefix") + when + t("nextAt") + minToHHMM(a);
         }
       }
     }
@@ -675,8 +758,8 @@
   }
   function render(){
     el.digits.textContent = fmt(state.remaining);
-    el.phase.textContent = state.phase === "work" ? "LAVORO" : "PAUSA";
-    el.cycle.textContent = "Ciclo " + state.cycle;
+    el.phase.textContent = state.phase === "work" ? t("work") : t("break");
+    el.cycle.textContent = t("cycle") + " " + state.cycle;
     document.body.classList.toggle("phase-break", state.phase === "break");
 
     const total = phaseDuration(state.phase);
@@ -687,7 +770,7 @@
     el.pause.disabled = !state.running;
 
     document.title = (state.running ? fmt(state.remaining)+" · " : "") +
-                     (state.phase === "work" ? "Lavoro" : "Pausa") + " — Pomodoro";
+                     (state.phase === "work" ? t("tWork") : t("tBreak")) + " — Thunder Focus";
   }
 
   // ---- Events ----
@@ -717,6 +800,18 @@
     save();
     // preview the chime so the choice is audible (user gesture unlocks audio)
     soundBreakStart();
+  });
+
+  el.langSeg.addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-lang]");
+    if(!b) return;
+    state.lang = b.dataset.lang;
+    save();
+    applyI18n();
+    render();
+    renderSchedule();
+    updateStatus();
+    schedulerCheck();
   });
 
   el.schedEnabled.addEventListener("change", ()=>{
@@ -754,22 +849,27 @@
   // ---- Notification permission hint ----
   function updateStatus(){
     if(!("Notification" in window)){
-      el.status.textContent = "Notifiche non supportate da questo browser.";
+      el.status.textContent = t("notifUnsupported");
       return;
     }
     if(Notification.permission === "granted"){
-      el.status.textContent = "Notifiche attive · schermo tenuto acceso durante il timer.";
+      el.status.textContent = t("notifActive");
     }else if(Notification.permission === "denied"){
-      el.status.textContent = "Notifiche bloccate dal browser (il timer funziona comunque).";
+      el.status.textContent = t("notifBlocked");
     }else{
-      el.status.innerHTML = 'Per gli avvisi: <a id="askNotif">abilita le notifiche</a>.';
-      const a = $("askNotif");
-      if(a) a.addEventListener("click", ()=>{ requestNotif(); setTimeout(updateStatus,500); });
+      el.status.textContent = "";
+      el.status.append(t("notifAskPre"));
+      const a = document.createElement("a");
+      a.id = "askNotif"; a.textContent = t("notifAskLink");
+      a.addEventListener("click", ()=>{ requestNotif(); setTimeout(updateStatus,500); });
+      el.status.append(a, ".");
     }
   }
 
   // ---- Boot ----
   load();
+  if(!state.lang || !LANG[state.lang]) state.lang = detectLang();
+  applyI18n();
   if(state.soundSec !== 5 && state.soundSec !== 10) state.soundSec = defaults.soundSec;
   if(!state.schedule || typeof state.schedule !== "object") state.schedule = {enabled:false, days:{0:[],1:[],2:[],3:[],4:[],5:[],6:[]}};
   if(!state.schedule.days) state.schedule.days = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
