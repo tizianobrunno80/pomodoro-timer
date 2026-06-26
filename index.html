@@ -181,6 +181,35 @@
     color:var(--muted);
   }
   .seg button.active{background:linear-gradient(135deg,var(--orange),#e85d00);color:#1a0d00}
+  .switch{position:relative;display:inline-block;width:50px;height:28px;flex:0 0 auto}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:#2a2a2a;border-radius:28px;transition:.2s;cursor:pointer}
+  .slider::before{content:"";position:absolute;height:22px;width:22px;left:3px;top:3px;background:#777;border-radius:50%;transition:.2s}
+  .switch input:checked + .slider{background:var(--orange)}
+  .switch input:checked + .slider::before{transform:translateX(22px);background:#1a0d00}
+  .sched-status{font-size:.82rem;color:var(--orange-soft);min-height:0;letter-spacing:.02em}
+  .sched-status:not(:empty){margin:-4px 0 4px}
+  .day{border-top:1px solid #222;padding:12px 0 4px}
+  .day:first-child{border-top:none}
+  .day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .day-head .dname{font-size:.9rem;font-weight:700;letter-spacing:.02em}
+  .day-head .addslot{
+    flex:0 0 auto;width:auto;padding:6px 12px;font-size:.78rem;
+    border-radius:9px;background:var(--bg-3);color:var(--orange-soft);font-weight:700;
+  }
+  .slots{display:flex;flex-direction:column;gap:7px}
+  .slot{display:flex;align-items:center;gap:8px}
+  .slot input[type=time]{
+    flex:1;background:var(--bg);border:1px solid #2a2a2a;color:var(--txt);
+    border-radius:9px;padding:8px 8px;font-size:.95rem;font-weight:600;
+    color-scheme:dark;min-width:0;
+  }
+  .slot .sep{color:var(--muted)}
+  .slot .rm{
+    flex:0 0 auto;width:34px;height:34px;padding:0;border-radius:9px;
+    background:var(--bg-3);color:#c66;font-size:1rem;line-height:1;
+  }
+  .slot.active input[type=time]{border-color:var(--orange)}
   .status{
     text-align:center;
     font-size:.78rem;
@@ -244,6 +273,19 @@
     </div>
   </div>
 
+  <div class="settings">
+    <div class="field">
+      <h2 style="margin:0">Programmazione orari</h2>
+      <label class="switch">
+        <input type="checkbox" id="schedEnabled">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div id="schedStatus" class="sched-status"></div>
+    <div id="schedDays"></div>
+    <p class="sched-note">Aggiungi una o più fasce per giorno (es. 08:00–12:00, 14:00–16:00). Il timer parte e si ferma da solo dentro le fasce. <strong>Nota:</strong> ad app aperta. La versione da store potrà avvisarti anche a app chiusa.</p>
+  </div>
+
   <div class="status" id="status"></div>
   <footer>Funziona offline · Aggiungi alla home per installare</footer>
 </div>
@@ -265,6 +307,9 @@
     work: $("workMin"),
     brk: $("breakMin"),
     soundSeg: $("soundSeg"),
+    schedEnabled: $("schedEnabled"),
+    schedDays: $("schedDays"),
+    schedStatus: $("schedStatus"),
     status: $("status"),
   };
 
@@ -284,6 +329,11 @@
     breakMin: defaults.breakMin,
     soundSec: defaults.soundSec,    // 5 or 10 — chime duration at phase change
     endAt: null,          // timestamp ms when current phase ends (only while running)
+    schedule: {           // automatic on/off windows
+      enabled: false,
+      // days keyed 0..6 (0=Sunday, JS getDay), each an array of {start:"HH:MM", end:"HH:MM"}
+      days: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
+    },
   };
 
   let tickHandle = null;
@@ -501,6 +551,110 @@
     render(); save();
   }
 
+  // ---- Scheduler ----
+  // Display order Monday-first; storage keyed by JS getDay (0=Sun).
+  const DAY_ORDER = [1,2,3,4,5,6,0];
+  const DAY_NAMES = {0:"Domenica",1:"Lunedì",2:"Martedì",3:"Mercoledì",4:"Giovedì",5:"Venerdì",6:"Sabato"};
+  let lastSlotKey = null;   // not persisted: which scheduled slot is currently driving the timer
+
+  function toMin(hhmm){
+    if(!hhmm || hhmm.indexOf(":") < 0) return null;
+    const p = hhmm.split(":");
+    const h = parseInt(p[0],10), m = parseInt(p[1],10);
+    if(isNaN(h) || isNaN(m)) return null;
+    return h*60 + m;
+  }
+  function minToHHMM(t){
+    return String(Math.floor(t/60)).padStart(2,"0") + ":" + String(t%60).padStart(2,"0");
+  }
+
+  function renderSchedule(){
+    el.schedEnabled.checked = !!state.schedule.enabled;
+    el.schedDays.style.display = state.schedule.enabled ? "" : "none";
+    if(!state.schedule.enabled){ el.schedStatus.textContent = ""; return; }
+
+    el.schedDays.innerHTML = "";
+    DAY_ORDER.forEach(day=>{
+      const slots = state.schedule.days[day] || [];
+      const wrap = document.createElement("div");
+      wrap.className = "day";
+      let slotsHtml = "";
+      slots.forEach((s,i)=>{
+        slotsHtml +=
+          '<div class="slot" data-day="'+day+'" data-idx="'+i+'">'+
+            '<input type="time" data-which="start" value="'+(s.start||"")+'">'+
+            '<span class="sep">–</span>'+
+            '<input type="time" data-which="end" value="'+(s.end||"")+'">'+
+            '<button type="button" class="rm" title="Rimuovi">✕</button>'+
+          '</div>';
+      });
+      wrap.innerHTML =
+        '<div class="day-head"><span class="dname">'+DAY_NAMES[day]+'</span>'+
+        '<button type="button" class="addslot" data-day="'+day+'">+ fascia</button></div>'+
+        '<div class="slots">'+slotsHtml+'</div>';
+      el.schedDays.appendChild(wrap);
+    });
+  }
+
+  function scheduleStartFresh(){
+    if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
+    state.phase = "work";
+    state.cycle = 1;
+    state.remaining = phaseDuration("work");
+    state.running = false; // let start() take it
+    start();
+  }
+
+  // Runs every second whenever scheduling is on; auto-starts at a slot's
+  // beginning and auto-stops at its end. Only fires while the app is open.
+  function schedulerCheck(){
+    if(!state.schedule.enabled){ lastSlotKey = null; return; }
+    const d = new Date();
+    const day = d.getDay();
+    const cur = d.getHours()*60 + d.getMinutes();
+    const slots = state.schedule.days[day] || [];
+
+    let activeKey = null, activeEnd = null;
+    for(let i=0;i<slots.length;i++){
+      const a = toMin(slots[i].start), b = toMin(slots[i].end);
+      if(a!=null && b!=null && b>a && cur>=a && cur<b){ activeKey = day+"-"+i; activeEnd = b; break; }
+    }
+
+    if(activeKey && activeKey !== lastSlotKey){
+      lastSlotKey = activeKey;          // a slot just became active (or app opened mid-slot)
+      scheduleStartFresh();
+    }else if(!activeKey && lastSlotKey){
+      lastSlotKey = null;               // slot just ended
+      if(state.running) pause();
+    }
+
+    // status line
+    if(activeEnd != null){
+      el.schedStatus.textContent = "● Attivo — sessione fino alle " + minToHHMM(activeEnd);
+    }else{
+      const next = nextSlotText(d);
+      el.schedStatus.textContent = next ? "○ In attesa — " + next : "○ Nessuna fascia programmata";
+    }
+  }
+
+  function nextSlotText(d){
+    // find the next upcoming slot within the next 7 days
+    const curDay = d.getDay();
+    const curMin = d.getHours()*60 + d.getMinutes();
+    for(let off=0; off<7; off++){
+      const day = (curDay+off)%7;
+      const slots = (state.schedule.days[day]||[])
+        .map(s=>toMin(s.start)).filter(v=>v!=null).sort((a,b)=>a-b);
+      for(const a of slots){
+        if(off>0 || a>curMin){
+          const when = off===0 ? "oggi" : (off===1 ? "domani" : DAY_NAMES[day]);
+          return "prossima " + when + " alle " + minToHHMM(a);
+        }
+      }
+    }
+    return "";
+  }
+
   // ---- Render ----
   function fmt(s){
     const m = Math.floor(s/60), ss = s%60;
@@ -552,6 +706,38 @@
     soundBreakStart();
   });
 
+  el.schedEnabled.addEventListener("change", ()=>{
+    state.schedule.enabled = el.schedEnabled.checked;
+    lastSlotKey = null;
+    renderSchedule();
+    save();
+    schedulerCheck();
+  });
+  el.schedDays.addEventListener("click", (e)=>{
+    const add = e.target.closest(".addslot");
+    if(add){
+      const day = parseInt(add.dataset.day,10);
+      (state.schedule.days[day] = state.schedule.days[day] || []).push({start:"08:00", end:"12:00"});
+      lastSlotKey = null; renderSchedule(); save(); schedulerCheck();
+      return;
+    }
+    const rm = e.target.closest(".rm");
+    if(rm){
+      const slot = rm.closest(".slot");
+      const day = parseInt(slot.dataset.day,10), idx = parseInt(slot.dataset.idx,10);
+      state.schedule.days[day].splice(idx,1);
+      lastSlotKey = null; renderSchedule(); save(); schedulerCheck();
+    }
+  });
+  el.schedDays.addEventListener("change", (e)=>{
+    const inp = e.target.closest('input[type="time"]');
+    if(!inp) return;
+    const slot = inp.closest(".slot");
+    const day = parseInt(slot.dataset.day,10), idx = parseInt(slot.dataset.idx,10);
+    state.schedule.days[day][idx][inp.dataset.which] = inp.value;
+    lastSlotKey = null; save(); schedulerCheck();
+  });
+
   // ---- Notification permission hint ----
   function updateStatus(){
     if(!("Notification" in window)){
@@ -572,9 +758,15 @@
   // ---- Boot ----
   load();
   if(state.soundSec !== 5 && state.soundSec !== 10) state.soundSec = defaults.soundSec;
+  if(!state.schedule || typeof state.schedule !== "object") state.schedule = {enabled:false, days:{0:[],1:[],2:[],3:[],4:[],5:[],6:[]}};
+  if(!state.schedule.days) state.schedule.days = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+  for(let i=0;i<7;i++){ if(!Array.isArray(state.schedule.days[i])) state.schedule.days[i] = []; }
   el.work.value = state.workMin;
   el.brk.value = state.breakMin;
   syncSoundSeg();
+  renderSchedule();
+  setInterval(schedulerCheck, 1000);
+  schedulerCheck();
   if(state.running){
     // resume ticking after a refresh
     if(state.endAt){
