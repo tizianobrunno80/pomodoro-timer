@@ -22,6 +22,7 @@
     --muted:#8a8a8a;
     --work:#ff7a18;
     --break:#ffc266;
+    --bg-break:#0c0a07;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
@@ -36,7 +37,7 @@
     padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
     transition:background .4s ease;
   }
-  body.phase-break{background:#0c0a07}
+  body.phase-break{background:var(--bg-break)}
   .wrap{
     width:100%;
     max-width:480px;
@@ -222,6 +223,25 @@
   .stat{flex:1;background:var(--bg);border:1px solid #242424;border-radius:14px;padding:14px 6px;text-align:center}
   .stat .sv{font-size:1.45rem;font-weight:800;color:var(--orange-soft);font-variant-numeric:tabular-nums}
   .stat .sl{font-size:.66rem;color:var(--muted);margin-top:5px;letter-spacing:.02em}
+  header{position:relative}
+  .gear{position:absolute;top:-4px;right:0;width:40px;height:40px;border-radius:12px;background:var(--bg-3);
+    display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;color:var(--txt);border:none}
+  .sheet{position:fixed;inset:0;background:var(--bg);z-index:50;transform:translateY(100%);
+    transition:transform .3s ease;overflow-y:auto;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+  .sheet.open{transform:translateY(0)}
+  .sheet-inner{width:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding:10px 0 50px}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;
+    background:var(--bg);padding:10px 0;z-index:2}
+  .sheet-head h2{margin:0;font-size:1rem;letter-spacing:.2em;text-transform:uppercase;color:var(--txt)}
+  .sheet-close{width:40px;height:40px;border:none;border-radius:12px;background:var(--bg-3);color:var(--txt);font-size:1.2rem;cursor:pointer}
+  .themes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .theme-sw{border:2px solid transparent;border-radius:14px;padding:8px;cursor:pointer;display:flex;flex-direction:column;gap:7px;align-items:center;background:var(--bg)}
+  .theme-sw .prev{width:100%;height:44px;border-radius:10px;position:relative;overflow:hidden;border:1px solid rgba(128,128,128,.28)}
+  .theme-sw .prev .dot{position:absolute;width:16px;height:16px;border-radius:50%;right:7px;bottom:7px}
+  .theme-sw .tn{font-size:.7rem;color:var(--muted)}
+  .theme-sw.active{border-color:var(--orange)}
+  .chart-title{font-size:.64rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin:10px 0 4px}
+  .chart-box svg{width:100%;display:block}
   .status{
     text-align:center;
     font-size:.78rem;
@@ -236,13 +256,13 @@
   .powered .pb{font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:#8a8a8a}
   .powered .wm{font-size:.98rem;font-weight:800;letter-spacing:.07em}
   .powered .wm .o{color:#FF6200}
-  .powered .wm .w{color:#F5F5F5}
+  .powered .wm .w{color:var(--txt)}
   .powered:active{opacity:.65}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Pomodoro Timer</h1></header>
+  <header><h1>Pomodoro Timer</h1><button class="gear" id="gearBtn" aria-label="settings">⚙</button></header>
 
   <div class="phase" id="phaseLabel">LAVORO</div>
 
@@ -281,12 +301,28 @@
       <div class="stat"><div class="sv" id="stTime">0m</div><div class="sl" data-i18n="statFocusTime">Tempo focus</div></div>
       <div class="stat"><div class="sv" id="stAvg">0m</div><div class="sl" data-i18n="statAvg">Media sessione</div></div>
     </div>
+    <div class="chart-title" data-i18n="chartFocus">Focus per giorno</div>
+    <div class="chart-box" id="chartHist"></div>
+    <div class="chart-title" data-i18n="chartEquity">Curva focus cumulata</div>
+    <div class="chart-box" id="chartEquity"></div>
   </div>
 
-  <div class="settings">
-    <h2 data-i18n="settings">Impostazioni</h2>
-    <div class="field">
-      <label data-i18n="language">Lingua</label>
+  <div class="sheet" id="settingsSheet">
+   <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 data-i18n="settings">Impostazioni</h2>
+      <button class="sheet-close" id="sheetClose" aria-label="close">✕</button>
+    </div>
+
+    <div class="settings">
+      <h2 data-i18n="theme">Tema</h2>
+      <div class="themes" id="themeGrid"></div>
+    </div>
+
+    <div class="settings">
+      <h2 data-i18n="general">Generali</h2>
+      <div class="field">
+        <label data-i18n="language">Lingua</label>
       <div class="seg" id="langSeg">
         <button type="button" data-lang="it">IT</button>
         <button type="button" data-lang="en">EN</button>
@@ -316,14 +352,21 @@
         <button type="button" data-sec="10">10 sec</button>
       </div>
     </div>
-    <div class="field">
-      <label data-i18n="keepAwake">Tieni schermo acceso</label>
-      <label class="switch">
-        <input type="checkbox" id="keepAwake">
-        <span class="slider"></span>
-      </label>
+      <div class="field">
+        <label data-i18n="keepAwake">Tieni schermo acceso</label>
+        <label class="switch">
+          <input type="checkbox" id="keepAwake">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field">
+        <label data-i18n="preAlertLabel">Avviso 15s pre-cambio</label>
+        <label class="switch">
+          <input type="checkbox" id="preAlertOn">
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
-  </div>
 
   <div class="settings">
     <div class="field">
@@ -338,7 +381,10 @@
     <p class="sched-note" data-i18n="schedNote">Aggiungi una o più fasce per giorno (es. 08:00–12:00, 14:00–16:00). Il timer parte e si ferma da solo dentro le fasce. Nota: ad app aperta. La versione da store potrà avvisarti anche a app chiusa.</p>
   </div>
 
-  <div class="status" id="status"></div>
+    <div class="status" id="status"></div>
+   </div>
+  </div>
+
   <footer>
     <div class="hint-line" data-i18n="offlineHint">Funziona offline · Aggiungi alla home per installare</div>
     <a class="powered" href="https://thethundertrader.com" target="_blank" rel="noopener noreferrer">
@@ -367,12 +413,19 @@
     soundSeg: $("soundSeg"),
     langSeg: $("langSeg"),
     keepAwake: $("keepAwake"),
+    preAlertOn: $("preAlertOn"),
     preAlert: $("preAlert"),
     tip: $("tip"),
+    gearBtn: $("gearBtn"),
+    sheet: $("settingsSheet"),
+    sheetClose: $("sheetClose"),
+    themeGrid: $("themeGrid"),
     statSeg: $("statSeg"),
     stSessions: $("stSessions"),
     stTime: $("stTime"),
     stAvg: $("stAvg"),
+    chartHist: $("chartHist"),
+    chartEquity: $("chartEquity"),
     schedEnabled: $("schedEnabled"),
     schedDays: $("schedDays"),
     schedStatus: $("schedStatus"),
@@ -396,6 +449,8 @@
     breakMin: defaults.breakMin,
     soundSec: defaults.soundSec,    // 5 or 10 — chime duration at phase change
     keepAwake: true,      // Screen Wake Lock on/off
+    preAlertOn: true,     // 15s pre-change alert on/off
+    theme: "dark1",       // selected theme id
     sessions: [],         // completed focus sessions: [{t: epochMs, mins: focusMinutes}]
     statPeriod: "today",  // stats view: today | week | month | all
     endAt: null,          // timestamp ms when current phase ends (only while running)
@@ -429,6 +484,7 @@
       statistics:"Statistiche", periodToday:"Oggi", periodWeek:"Settimana", periodMonth:"Mese", periodAll:"Totale",
       statSessions:"Sessioni", statFocusTime:"Tempo focus", statAvg:"Media sessione",
       keepAwake:"Tieni schermo acceso", preAlertBreak:"Pausa tra 15s", preAlertWork:"Lavoro tra 15s",
+      theme:"Tema", general:"Generali", preAlertLabel:"Avviso 15s pre-cambio", chartFocus:"Focus per giorno", chartEquity:"Curva focus cumulata",
       days:["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
     },
     en: {
@@ -449,6 +505,7 @@
       statistics:"Statistics", periodToday:"Today", periodWeek:"Week", periodMonth:"Month", periodAll:"Total",
       statSessions:"Sessions", statFocusTime:"Focus time", statAvg:"Avg session",
       keepAwake:"Keep screen awake", preAlertBreak:"Break in 15s", preAlertWork:"Work in 15s",
+      theme:"Theme", general:"General", preAlertLabel:"15s pre-change alert", chartFocus:"Focus per day", chartEquity:"Cumulative focus curve",
       days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     },
     es: {
@@ -469,6 +526,7 @@
       statistics:"Estadísticas", periodToday:"Hoy", periodWeek:"Semana", periodMonth:"Mes", periodAll:"Total",
       statSessions:"Sesiones", statFocusTime:"Tiempo focus", statAvg:"Media sesión",
       keepAwake:"Mantener pantalla activa", preAlertBreak:"Pausa en 15s", preAlertWork:"Trabajo en 15s",
+      theme:"Tema", general:"General", preAlertLabel:"Aviso 15s antes del cambio", chartFocus:"Focus por día", chartEquity:"Curva de focus acumulado",
       days:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
     }
   };
@@ -561,6 +619,7 @@
     el.stTime.textContent = fmtDur(totalSec);
     el.stAvg.textContent = fmtDur(count ? Math.round(totalSec/count) : 0);
     el.statSeg.querySelectorAll("button").forEach(b=>{ b.classList.toggle("active", b.dataset.period === state.statPeriod); });
+    renderCharts();
   }
   function logSession(mins){
     if(!Array.isArray(state.sessions)) state.sessions = [];
@@ -572,7 +631,7 @@
   // ---- 15s pre-change alert ----
   let warned = false;
   function maybePreAlert(){
-    if(state.running && state.remaining <= 15 && state.remaining > 0){
+    if(state.preAlertOn && state.running && state.remaining <= 15 && state.remaining > 0){
       el.preAlert.textContent = "↻ " + (state.phase === "work" ? t("preAlertBreak") : t("preAlertWork"));
       el.preAlert.classList.add("show");
       if(!warned){ warned = true; bell([880], 0, 0.18); }   // soft single tick at the 15s mark
@@ -581,6 +640,73 @@
       el.preAlert.textContent = "";
       warned = false;
     }
+  }
+
+  // ---- Themes (3 dark + 3 light, brand-safe) ----
+  const THEMES = {
+    dark1: { name:"Thunder", vars:{ "--bg":"#0a0a0a","--bg-2":"#141414","--bg-3":"#1d1d1d","--txt":"#f5f5f5","--muted":"#8a8a8a","--work":"#ff7a18","--break":"#ffc266","--bg-break":"#0c0a07","--orange":"#ff7a18","--orange-soft":"#ffa14d" } },
+    dark2: { name:"Midnight", vars:{ "--bg":"#0b0e17","--bg-2":"#121726","--bg-3":"#1b2334","--txt":"#eef2f8","--muted":"#8893a8","--work":"#E46830","--break":"#6aa6ff","--bg-break":"#0a0f1e","--orange":"#E46830","--orange-soft":"#ff9f5a" } },
+    dark3: { name:"Ember", vars:{ "--bg":"#120d0a","--bg-2":"#1d1411","--bg-3":"#281a14","--txt":"#f6efe9","--muted":"#9b8a80","--work":"#ff7a18","--break":"#ffcf8a","--bg-break":"#160d06","--orange":"#ff7a18","--orange-soft":"#ffb24d" } },
+    light1: { name:"Daylight", vars:{ "--bg":"#f4f5f7","--bg-2":"#ffffff","--bg-3":"#e9ecf1","--txt":"#1a1d24","--muted":"#6b7280","--work":"#E85D00","--break":"#c47a00","--bg-break":"#efe7dd","--orange":"#E85D00","--orange-soft":"#b85400" } },
+    light2: { name:"Paper", vars:{ "--bg":"#f7f3ec","--bg-2":"#fffdf8","--bg-3":"#efe7d9","--txt":"#2a2318","--muted":"#8a7c66","--work":"#E46830","--break":"#b0702a","--bg-break":"#f0e4d2","--orange":"#E46830","--orange-soft":"#b85a28" } },
+    light3: { name:"Mist", vars:{ "--bg":"#eef1f5","--bg-2":"#ffffff","--bg-3":"#e3e8ef","--txt":"#1b2330","--muted":"#66707f","--work":"#ff7a18","--break":"#2f7fd6","--bg-break":"#e6ebf2","--orange":"#ff7a18","--orange-soft":"#d9650f" } }
+  };
+  const THEME_ORDER = ["dark1","dark2","dark3","light1","light2","light3"];
+  function applyTheme(id){
+    const th = THEMES[id] || THEMES.dark1;
+    const root = document.documentElement;
+    for(const k in th.vars) root.style.setProperty(k, th.vars[k]);
+    el.themeGrid.querySelectorAll(".theme-sw").forEach(b=>{ b.classList.toggle("active", b.dataset.theme === id); });
+  }
+  function renderThemeGrid(){
+    el.themeGrid.innerHTML = "";
+    THEME_ORDER.forEach(id=>{
+      const v = THEMES[id].vars;
+      const sw = document.createElement("div");
+      sw.className = "theme-sw" + (id === state.theme ? " active" : "");
+      sw.dataset.theme = id;
+      sw.innerHTML = '<div class="prev" style="background:'+v["--bg-2"]+'"><div class="dot" style="background:'+v["--work"]+'"></div></div>'+
+                     '<div class="tn">'+THEMES[id].name+'</div>';
+      el.themeGrid.appendChild(sw);
+    });
+  }
+
+  // ---- Charts (inline SVG, trading-style) ----
+  function dayKey(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+  function buildDayBuckets(days){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const buckets = [];
+    for(let i=days-1;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); buckets.push({ t:d.getTime(), mins:0 }); }
+    const idx = {}; buckets.forEach((b,i)=>idx[b.t]=i);
+    (state.sessions||[]).forEach(s=>{ const k=dayKey(s.t); if(k in idx) buckets[idx[k]].mins += (s.mins||0); });
+    return buckets;
+  }
+  function svgEl(w,h){ return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'; }
+  function renderCharts(){
+    const days = (state.statPeriod === "month" || state.statPeriod === "all") ? 30 : 7;
+    const b = buildDayBuckets(days);
+    const W=320, H=110, pad=6, bw=(W-pad*2)/days;
+    const max = Math.max(1, ...b.map(x=>x.mins));
+    // histogram
+    let bars = svgEl(W,H);
+    b.forEach((x,i)=>{
+      const bh = Math.round((x.mins/max)*(H-16));
+      const bx = pad + i*bw, by = H-bh-2;
+      bars += '<rect x="'+(bx+2)+'" y="'+by+'" width="'+(bw-4)+'" height="'+Math.max(bh,1)+'" rx="3" fill="var(--orange)" opacity="'+(x.mins?0.9:0.18)+'"/>';
+    });
+    bars += '</svg>';
+    el.chartHist.innerHTML = bars;
+    // equity (cumulative)
+    let cum=0; const pts=[]; const tot=Math.max(1,b.reduce((a,x)=>a+x.mins,0));
+    b.forEach((x,i)=>{ cum+=x.mins; const px=pad+i*bw+bw/2; const py=(H-2)-(cum/tot)*(H-16); pts.push([px,py]); });
+    let path = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    let area = 'M'+pts[0][0].toFixed(1)+' '+(H-2)+' '+pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')+' L'+pts[pts.length-1][0].toFixed(1)+' '+(H-2)+' Z';
+    let eq = svgEl(W,H);
+    eq += '<path d="'+area+'" fill="var(--orange)" opacity="0.12"/>';
+    eq += '<path d="'+path+'" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+    pts.forEach((p,i)=>{ if(i===pts.length-1) eq+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.5" fill="var(--orange)"/>'; });
+    eq += '</svg>';
+    el.chartEquity.innerHTML = eq;
   }
 
   // ---- Persistence ----
@@ -983,6 +1109,24 @@
     if(!state.keepAwake) releaseWakeLock();
     save();
   });
+  el.preAlertOn.addEventListener("change", ()=>{
+    state.preAlertOn = el.preAlertOn.checked;
+    maybePreAlert();
+    save();
+  });
+
+  // settings sheet open/close
+  el.gearBtn.addEventListener("click", ()=>{ el.sheet.classList.add("open"); });
+  el.sheetClose.addEventListener("click", ()=>{ el.sheet.classList.remove("open"); });
+
+  // theme picker
+  el.themeGrid.addEventListener("click", (e)=>{
+    const b = e.target.closest(".theme-sw");
+    if(!b) return;
+    state.theme = b.dataset.theme;
+    applyTheme(state.theme);
+    save();
+  });
 
   el.schedEnabled.addEventListener("change", ()=>{
     state.schedule.enabled = el.schedEnabled.checked;
@@ -1048,9 +1192,14 @@
   el.brk.value = state.breakMin;
   syncSoundSeg();
   if(typeof state.keepAwake !== "boolean") state.keepAwake = true;
+  if(typeof state.preAlertOn !== "boolean") state.preAlertOn = true;
+  if(!THEMES[state.theme]) state.theme = "dark1";
   if(!Array.isArray(state.sessions)) state.sessions = [];
   if(["today","week","month","all"].indexOf(state.statPeriod) < 0) state.statPeriod = "today";
   el.keepAwake.checked = state.keepAwake;
+  el.preAlertOn.checked = state.preAlertOn;
+  renderThemeGrid();
+  applyTheme(state.theme);
   renderStats();
   rotateTip(false);
   setInterval(()=>rotateTip(true), 22000);
