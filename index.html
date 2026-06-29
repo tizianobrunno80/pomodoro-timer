@@ -48,16 +48,16 @@
     padding:24px 0;
   }
   header{display:flex;align-items:center;gap:6px}
+  .title-wrap{flex:1;text-align:center;min-width:0}
   header h1{
-    flex:1;
-    text-align:center;
     font-size:1.1rem;
     letter-spacing:.28em;
     text-transform:uppercase;
     margin:0;
-    color:var(--muted);
-    font-weight:600;
+    color:var(--txt);
+    font-weight:700;
   }
+  .subtitle{font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-top:4px}
   .hbtns{display:flex;gap:6px;flex:0 0 auto;align-items:center}
   .hspace{width:78px}
   .hbtn{width:36px;height:36px;border-radius:10px;background:var(--bg-3);color:var(--txt);border:none;
@@ -303,7 +303,10 @@
 <div class="wrap">
   <header>
     <div class="hbtns hspace"></div>
-    <h1>Pomodoro Timer</h1>
+    <div class="title-wrap">
+      <h1>Thunder Focus</h1>
+      <div class="subtitle">Pomodoro Timer</div>
+    </div>
     <div class="hbtns">
       <button class="hbtn" id="progBtn" aria-label="progress"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg></button>
       <button class="hbtn" id="gearBtn" aria-label="settings">⚙</button>
