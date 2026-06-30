@@ -101,6 +101,23 @@
     filter:drop-shadow(0 0 6px rgba(255,122,24,.45));
   }
   body.phase-break .ring .prog{stroke:var(--break);filter:drop-shadow(0 0 6px rgba(255,194,102,.45))}
+  /* daily goal ring (home) */
+  .goalring-card{display:flex;align-items:center;gap:20px;justify-content:center;padding:16px 18px}
+  .goalring{position:relative;width:128px;height:128px;flex:0 0 auto}
+  .goalring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .goalring .grt{fill:none;stroke:#2a2a2a;stroke-width:9}
+  .goalring .grp{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+  .goalring .gr-sess{stroke:var(--work);filter:drop-shadow(0 0 4px rgba(255,122,24,.4))}
+  .goalring .gr-min{stroke:var(--break)}
+  .goalring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .goalring-center .grn{font-size:1.55rem;font-weight:800;color:var(--txt);line-height:1}
+  .goalring-center .grl{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .goalring-legend{font-size:.85rem;color:var(--muted);line-height:1.85}
+  .goalring-legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  .goalring-legend b{color:var(--txt);font-weight:700}
+  .gr-done-badge{display:none;margin-top:4px;font-size:.8rem;font-weight:800;color:var(--work)}
+  .goalring-card.done .gr-done-badge{display:block}
+  .goalring-card.done .goalring-center .grn{color:var(--work)}
   .time{
     position:absolute;
     inset:0;
@@ -189,6 +206,15 @@
     color:var(--muted);
   }
   .seg button.active{background:linear-gradient(135deg,var(--orange),#e85d00);color:#1a0d00}
+  #langSeg{flex-wrap:wrap}
+  #langSeg button{padding:8px 13px}
+  #musicGenres{display:flex;flex-wrap:wrap;gap:8px}
+  .mtrack{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid #2a2a2a;border-radius:10px;margin-top:6px;cursor:pointer;background:var(--bg)}
+  .mtrack.active{border-color:var(--orange)}
+  .mtrack .mt-name{font-size:.9rem}
+  .mtrack .mt-play{font-size:1rem;color:var(--orange);width:22px;text-align:center}
+  .danger-btn{width:100%;padding:11px;border-radius:10px;border:1px solid #5a2020;background:#1d1010;color:#ff7a7a;font-weight:700;font-size:.9rem;cursor:pointer}
+  .danger-btn:active{background:#2a1414}
   .switch{position:relative;display:inline-block;width:50px;height:28px;flex:0 0 auto}
   .switch input{opacity:0;width:0;height:0}
   .slider{position:absolute;inset:0;background:#2a2a2a;border-radius:28px;transition:.2s;cursor:pointer}
@@ -335,6 +361,26 @@
     </div>
   </div>
 
+  <div class="settings goalring-card" id="goalRingCard">
+    <div class="goalring">
+      <svg viewBox="0 0 120 120">
+        <circle class="grt" cx="60" cy="60" r="52"></circle>
+        <circle class="grt" cx="60" cy="60" r="40"></circle>
+        <circle class="grp gr-sess" id="grSess" cx="60" cy="60" r="52"></circle>
+        <circle class="grp gr-min" id="grMin" cx="60" cy="60" r="40"></circle>
+      </svg>
+      <div class="goalring-center">
+        <div class="grn" id="grNum">0/0</div>
+        <div class="grl" data-i18n="periodToday">Oggi</div>
+      </div>
+    </div>
+    <div class="goalring-legend">
+      <div><span class="dot" style="background:var(--work)"></span><span data-i18n="statSessions">Sessioni</span>: <b id="grSessTxt">0/0</b></div>
+      <div><span class="dot" style="background:var(--break)"></span><span data-i18n="statFocusTime">Tempo focus</span>: <b id="grMinTxt">0/0</b></div>
+      <div class="gr-done-badge">🎉 <span data-i18n="goalDone">Obiettivo del giorno!</span></div>
+    </div>
+  </div>
+
   <div class="cat-row" id="catRow"></div>
 
   <div class="tip" id="tip"></div>
@@ -429,6 +475,10 @@
     <div class="settings">
       <h2 data-i18n="homeSections">Sezioni in home</h2>
       <div class="field">
+        <label data-i18n="goalRing">Anello obiettivo</label>
+        <label class="switch"><input type="checkbox" id="homeRing"><span class="slider"></span></label>
+      </div>
+      <div class="field">
         <label data-i18n="categories">Categorie</label>
         <label class="switch"><input type="checkbox" id="homeCategory"><span class="slider"></span></label>
       </div>
@@ -460,6 +510,9 @@
         <button type="button" data-lang="it">IT</button>
         <button type="button" data-lang="en">EN</button>
         <button type="button" data-lang="es">ES</button>
+        <button type="button" data-lang="pt">PT</button>
+        <button type="button" data-lang="fr">FR</button>
+        <button type="button" data-lang="de">DE</button>
       </div>
     </div>
     <div class="field">
@@ -510,10 +563,24 @@
         <button type="button" data-bs="brown" data-i18n="bsBrown">Rumore marrone</button>
         <button type="button" data-bs="binaural" data-i18n="bsBinaural">Binaurale</button>
         <button type="button" data-bs="rain" data-i18n="bsRain">Pioggia</button>
+        <button type="button" data-bs="storm" data-i18n="bsStorm">Temporale</button>
+        <button type="button" data-bs="music" data-i18n="bsMusic">Musica</button>
+      </div>
+      <div id="musicPanel" style="display:none;margin-top:10px">
+        <div id="musicGenres"></div>
+        <div class="field" style="margin-top:9px">
+          <label data-i18n="musicShuffle">Riproduci casuale</label>
+          <label class="switch"><input type="checkbox" id="musicShuffle"><span class="slider"></span></label>
+        </div>
+        <div id="musicList"></div>
       </div>
       <div class="vol-row">
         <span data-i18n="volume">Volume</span>
         <input type="range" id="breakVol" min="0" max="100" value="40">
+      </div>
+      <div class="field" style="margin-top:8px">
+        <label data-i18n="soundAlways">Riproduci sempre (anche nel lavoro)</label>
+        <label class="switch"><input type="checkbox" id="soundAlways"><span class="slider"></span></label>
       </div>
       <div class="field-note" data-i18n="binauralHint">Binaurale: usa le cuffie per percepire l'effetto.</div>
     </div>
@@ -531,6 +598,12 @@
     <p class="sched-note" data-i18n="schedNote">Aggiungi una o più fasce per giorno (es. 08:00–12:00, 14:00–16:00). Il timer parte e si ferma da solo dentro le fasce. Nota: ad app aperta. La versione da store potrà avvisarti anche a app chiusa.</p>
   </div>
 
+    <div class="settings">
+      <h2 data-i18n="dataTitle">Dati</h2>
+      <button type="button" class="danger-btn" id="clearStatsBtn" data-i18n="clearStats">Azzera statistiche</button>
+      <div class="field-note" data-i18n="clearStatsNote">Cancella sessioni, streak e badge. Le impostazioni restano.</div>
+    </div>
+
     <div class="status" id="status"></div>
    </div>
   </div>
@@ -544,6 +617,8 @@
   </footer>
 </div>
 
+<!-- Music catalog (generated by audio/build-manifest.cjs). Sets window.__MUSIC; harmless 404 if absent. -->
+<script src="audio/manifest.js"></script>
 <script>
 "use strict";
 (function(){
@@ -569,8 +644,21 @@
     catRow: $("catRow"),
     catDonut: $("catDonut"),
     catLegend: $("catLegend"),
+    goalRingCard: $("goalRingCard"),
+    grSess: $("grSess"),
+    grMin: $("grMin"),
+    grNum: $("grNum"),
+    grSessTxt: $("grSessTxt"),
+    grMinTxt: $("grMinTxt"),
+    homeRing: $("homeRing"),
     homeCategory: $("homeCategory"),
     breakSoundOpts: $("breakSoundOpts"),
+    soundAlways: $("soundAlways"),
+    clearStatsBtn: $("clearStatsBtn"),
+    musicPanel: $("musicPanel"),
+    musicGenres: $("musicGenres"),
+    musicShuffle: $("musicShuffle"),
+    musicList: $("musicList"),
     breakVol: $("breakVol"),
     catToggles: $("catToggles"),
     homeSlot: $("homeSlot"),
@@ -630,10 +718,14 @@
     goalSessions: 8,      // daily target: focus sessions
     goalMinutes: 120,     // daily target: focus minutes
     category: "work",     // current activity category for logged sessions
-    breakSound: "off",    // ambient during break: off|white|brown|binaural|rain
+    breakSound: "off",    // ambient during break: off|white|brown|binaural|rain|storm|music
     breakVolume: 40,      // 0..100
+    soundAlways: false,   // play the break sound always (also during work), not only on break
+    musicGenre: "all",    // music filter: all|jazz|rock|rap
+    musicShuffle: true,   // shuffle the playlist vs loop a single track
+    musicTrack: "",       // selected single track (file path) when shuffle is off
     catEnabled: {},       // which categories are shown (filled on boot)
-    home: { category:true, stats:false, times:false, tips:true },  // which sections show on the home screen
+    home: { ring:true, category:true, stats:false, times:false, tips:true },  // which sections show on the home screen
     sessions: [],         // completed focus sessions: [{t: epochMs, mins: focusMinutes}]
     statPeriod: "today",  // stats view: today | week | month | all
     endAt: null,          // timestamp ms when current phase ends (only while running)
@@ -668,11 +760,11 @@
       statSessions:"Sessioni", statFocusTime:"Tempo focus", statAvg:"Media sessione",
       keepAwake:"Tieni schermo acceso", preAlertBreak:"Pausa tra 15s", preAlertWork:"Lavoro tra 15s",
       theme:"Tema", general:"Generali", preAlertLabel:"Avviso 15s pre-cambio", chartFocus:"Focus per giorno", chartEquity:"Curva focus cumulata",
-      progress:"Progressi", goals:"Obiettivi di oggi", achievements:"Obiettivi raggiunti", streakDays:"giorni di fila", goalSessTarget:"Obiettivo sessioni/giorno", goalTimeTarget:"Obiettivo minuti/giorno",
+      progress:"Progressi", goals:"Obiettivi di oggi", achievements:"Obiettivi raggiunti", streakDays:"giorni di fila", goalSessTarget:"Obiettivo sessioni/giorno", goalTimeTarget:"Obiettivo minuti/giorno", goalRing:"Anello obiettivo", goalDone:"Obiettivo del giorno!",
       times:"Tempi", homeSections:"Sezioni in home", tips:"Frasi motivazionali",
       goalsHint:"Obiettivi giornalieri: quante sessioni e quanti minuti di focus vuoi fare al giorno. I progressi sono nella schermata Progressi 📊.",
       categories:"Categorie", chartCategory:"Per categoria", catStudy:"Studio", catWork:"Lavoro", catSport:"Sport", catTraining:"Allenamento", catRelax:"Relax", catFree:"Tempo libero",
-      breakSoundTitle:"Suono pausa", bsOff:"Silenzio", bsWhite:"Rumore bianco", bsBrown:"Rumore marrone", bsBinaural:"Binaurale", bsRain:"Pioggia", volume:"Volume", binauralHint:"Binaurale: usa le cuffie per percepire l'effetto.",
+      breakSoundTitle:"Suono pausa", bsOff:"Silenzio", bsWhite:"Rumore bianco", bsBrown:"Rumore marrone", bsBinaural:"Binaurale", bsRain:"Pioggia", bsStorm:"Temporale", bsJazz:"Jazz / Lo-fi", volume:"Volume", musicTrack:"Brano", bsMusic:"Musica", genreAll:"Tutti", musicShuffle:"Riproduci casuale", musicEmpty:"Aggiungi i tuoi brani nella cartella audio/ (vedi README)", soundAlways:"Riproduci sempre (anche nel lavoro)", dataTitle:"Dati", clearStats:"Azzera statistiche", clearStatsNote:"Cancella sessioni, streak e badge. Le impostazioni restano.", clearStatsConfirm:"Azzerare tutte le statistiche? L'operazione non è reversibile.", binauralHint:"Binaurale: usa le cuffie per percepire l'effetto.",
       catHint:"Assegna ogni sessione a un'attività. Scegli quali categorie mostrare sul timer e nel grafico a torta.",
       days:["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
     },
@@ -695,11 +787,11 @@
       statSessions:"Sessions", statFocusTime:"Focus time", statAvg:"Avg session",
       keepAwake:"Keep screen awake", preAlertBreak:"Break in 15s", preAlertWork:"Work in 15s",
       theme:"Theme", general:"General", preAlertLabel:"15s pre-change alert", chartFocus:"Focus per day", chartEquity:"Cumulative focus curve",
-      progress:"Progress", goals:"Today's goals", achievements:"Achievements", streakDays:"day streak", goalSessTarget:"Daily sessions goal", goalTimeTarget:"Daily minutes goal",
+      progress:"Progress", goals:"Today's goals", achievements:"Achievements", streakDays:"day streak", goalSessTarget:"Daily sessions goal", goalTimeTarget:"Daily minutes goal", goalRing:"Goal ring", goalDone:"Daily goal reached!",
       times:"Times", homeSections:"Home sections", tips:"Motivational quotes",
       goalsHint:"Daily goals: how many focus sessions and minutes you aim for each day. Track them in the Progress screen 📊.",
       categories:"Categories", chartCategory:"By category", catStudy:"Study", catWork:"Work", catSport:"Sport", catTraining:"Training", catRelax:"Relax", catFree:"Free time",
-      breakSoundTitle:"Break sound", bsOff:"Silence", bsWhite:"White noise", bsBrown:"Brown noise", bsBinaural:"Binaural", bsRain:"Rain", volume:"Volume", binauralHint:"Binaural: use headphones to feel the effect.",
+      breakSoundTitle:"Break sound", bsOff:"Silence", bsWhite:"White noise", bsBrown:"Brown noise", bsBinaural:"Binaural", bsRain:"Rain", bsStorm:"Thunderstorm", bsJazz:"Jazz / Lo-fi", volume:"Volume", musicTrack:"Track", bsMusic:"Music", genreAll:"All", musicShuffle:"Shuffle", musicEmpty:"Add your tracks to the audio/ folder (see README)", soundAlways:"Play always (also during work)", dataTitle:"Data", clearStats:"Reset statistics", clearStatsNote:"Clears sessions, streak and badges. Settings are kept.", clearStatsConfirm:"Reset all statistics? This cannot be undone.", binauralHint:"Binaural: use headphones to feel the effect.",
       catHint:"Tag each session with an activity. Choose which categories show on the timer and in the pie chart.",
       days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     },
@@ -722,20 +814,101 @@
       statSessions:"Sesiones", statFocusTime:"Tiempo focus", statAvg:"Media sesión",
       keepAwake:"Mantener pantalla activa", preAlertBreak:"Pausa en 15s", preAlertWork:"Trabajo en 15s",
       theme:"Tema", general:"General", preAlertLabel:"Aviso 15s antes del cambio", chartFocus:"Focus por día", chartEquity:"Curva de focus acumulado",
-      progress:"Progreso", goals:"Objetivos de hoy", achievements:"Logros", streakDays:"días seguidos", goalSessTarget:"Meta sesiones/día", goalTimeTarget:"Meta minutos/día",
+      progress:"Progreso", goals:"Objetivos de hoy", achievements:"Logros", streakDays:"días seguidos", goalSessTarget:"Meta sesiones/día", goalTimeTarget:"Meta minutos/día", goalRing:"Anillo de objetivos", goalDone:"¡Objetivo del día!",
       times:"Tiempos", homeSections:"Secciones en inicio", tips:"Frases motivadoras",
       goalsHint:"Objetivos diarios: cuántas sesiones y minutos de focus quieres hacer al día. Míralos en la pantalla Progreso 📊.",
       categories:"Categorías", chartCategory:"Por categoría", catStudy:"Estudio", catWork:"Trabajo", catSport:"Deporte", catTraining:"Entrenamiento", catRelax:"Relax", catFree:"Tiempo libre",
-      breakSoundTitle:"Sonido de pausa", bsOff:"Silencio", bsWhite:"Ruido blanco", bsBrown:"Ruido marrón", bsBinaural:"Binaural", bsRain:"Lluvia", volume:"Volumen", binauralHint:"Binaural: usa auriculares para percibir el efecto.",
+      breakSoundTitle:"Sonido de pausa", bsOff:"Silencio", bsWhite:"Ruido blanco", bsBrown:"Ruido marrón", bsBinaural:"Binaural", bsRain:"Lluvia", bsStorm:"Tormenta", bsJazz:"Jazz / Lo-fi", volume:"Volumen", musicTrack:"Pista", bsMusic:"Música", genreAll:"Todos", musicShuffle:"Aleatorio", musicEmpty:"Añade tus pistas a la carpeta audio/ (ver README)", soundAlways:"Reproducir siempre (también en el trabajo)", dataTitle:"Datos", clearStats:"Borrar estadísticas", clearStatsNote:"Borra sesiones, racha y logros. Los ajustes se mantienen.", clearStatsConfirm:"¿Borrar todas las estadísticas? No se puede deshacer.", binauralHint:"Binaural: usa auriculares para percibir el efecto.",
       catHint:"Asigna cada sesión a una actividad. Elige qué categorías mostrar en el temporizador y en el gráfico circular.",
       days:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
+    },
+    pt: {
+      settings:"Configurações", language:"Idioma",
+      workMin:"Minutos de trabalho", breakMin:"Minutos de pausa", soundDur:"Duração do som",
+      schedule:"Programação de horários",
+      schedNote:"Adicione uma ou mais faixas por dia (ex.: 08:00–12:00, 14:00–16:00). O timer inicia e para sozinho dentro das faixas. Obs.: com o app aberto. A versão da loja poderá avisar você mesmo com o app fechado.",
+      offlineHint:"Funciona offline · Adicione à tela inicial para instalar",
+      work:"TRABALHO", break:"PAUSA", cycle:"Ciclo", tWork:"Trabalho", tBreak:"Pausa",
+      addSlot:"+ faixa", remove:"Remover",
+      schedActive:"● Ativo — sessão até ", schedWaiting:"○ Aguardando — ", schedNone:"○ Nenhuma faixa programada",
+      nextPrefix:"próxima ", nextAt:" às ", today:"hoje", tomorrow:"amanhã",
+      breakBody1:"Faça uma pausa de ", breakBody2:" minutos", workBody:"De volta ao trabalho",
+      notifActive:"Notificações ativas · tela mantida acesa enquanto o timer corre.",
+      notifBlocked:"Notificações bloqueadas pelo navegador (o timer funciona mesmo assim).",
+      notifAskPre:"Para os avisos: ", notifAskLink:"ativar as notificações",
+      notifUnsupported:"Notificações não suportadas por este navegador.",
+      statistics:"Estatísticas", periodToday:"Hoje", periodWeek:"Semana", periodMonth:"Mês", periodAll:"Total",
+      statSessions:"Sessões", statFocusTime:"Tempo de foco", statAvg:"Média por sessão",
+      keepAwake:"Manter tela acesa", preAlertBreak:"Pausa em 15s", preAlertWork:"Trabalho em 15s",
+      theme:"Tema", general:"Geral", preAlertLabel:"Aviso 15s antes da troca", chartFocus:"Foco por dia", chartEquity:"Curva de foco acumulado",
+      progress:"Progresso", goals:"Metas de hoje", achievements:"Conquistas", streakDays:"dias seguidos", goalSessTarget:"Meta de sessões/dia", goalTimeTarget:"Meta de minutos/dia", goalRing:"Anel de metas", goalDone:"Meta do dia atingida!",
+      times:"Tempos", homeSections:"Seções na tela inicial", tips:"Frases motivacionais",
+      goalsHint:"Metas diárias: quantas sessões e quantos minutos de foco você quer fazer por dia. Acompanhe na tela Progresso 📊.",
+      categories:"Categorias", chartCategory:"Por categoria", catStudy:"Estudo", catWork:"Trabalho", catSport:"Esporte", catTraining:"Treino", catRelax:"Relax", catFree:"Tempo livre",
+      breakSoundTitle:"Som da pausa", bsOff:"Silêncio", bsWhite:"Ruído branco", bsBrown:"Ruído marrom", bsBinaural:"Binaural", bsRain:"Chuva", bsStorm:"Tempestade", bsJazz:"Jazz / Lo-fi", volume:"Volume", musicTrack:"Faixa", bsMusic:"Música", genreAll:"Todos", musicShuffle:"Aleatório", musicEmpty:"Adicione suas faixas à pasta audio/ (veja README)", soundAlways:"Tocar sempre (também no trabalho)", dataTitle:"Dados", clearStats:"Apagar estatísticas", clearStatsNote:"Apaga sessões, sequência e conquistas. As configurações ficam.", clearStatsConfirm:"Apagar todas as estatísticas? Não pode ser desfeito.", binauralHint:"Binaural: use fones para sentir o efeito.",
+      catHint:"Atribua cada sessão a uma atividade. Escolha quais categorias mostrar no timer e no gráfico de pizza.",
+      days:["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"]
+    },
+    fr: {
+      settings:"Réglages", language:"Langue",
+      workMin:"Minutes de travail", breakMin:"Minutes de pause", soundDur:"Durée du son",
+      schedule:"Programmation horaire",
+      schedNote:"Ajoutez une ou plusieurs plages par jour (ex. 08:00–12:00, 14:00–16:00). Le minuteur démarre et s'arrête tout seul dans les plages. Note : appli ouverte. La version du store pourra vous prévenir même appli fermée.",
+      offlineHint:"Fonctionne hors ligne · Ajoutez à l'écran d'accueil pour installer",
+      work:"TRAVAIL", break:"PAUSE", cycle:"Cycle", tWork:"Travail", tBreak:"Pause",
+      addSlot:"+ plage", remove:"Retirer",
+      schedActive:"● Actif — session jusqu'à ", schedWaiting:"○ En attente — ", schedNone:"○ Aucune plage programmée",
+      nextPrefix:"prochaine ", nextAt:" à ", today:"aujourd'hui", tomorrow:"demain",
+      breakBody1:"Fais une pause de ", breakBody2:" minutes", workBody:"Retour au travail",
+      notifActive:"Notifications activées · écran maintenu allumé pendant le minuteur.",
+      notifBlocked:"Notifications bloquées par le navigateur (le minuteur fonctionne quand même).",
+      notifAskPre:"Pour les alertes : ", notifAskLink:"activer les notifications",
+      notifUnsupported:"Notifications non prises en charge par ce navigateur.",
+      statistics:"Statistiques", periodToday:"Aujourd'hui", periodWeek:"Semaine", periodMonth:"Mois", periodAll:"Total",
+      statSessions:"Sessions", statFocusTime:"Temps de focus", statAvg:"Moyenne / session",
+      keepAwake:"Garder l'écran allumé", preAlertBreak:"Pause dans 15s", preAlertWork:"Travail dans 15s",
+      theme:"Thème", general:"Général", preAlertLabel:"Alerte 15s avant le changement", chartFocus:"Focus par jour", chartEquity:"Courbe de focus cumulé",
+      progress:"Progrès", goals:"Objectifs du jour", achievements:"Réussites", streakDays:"jours d'affilée", goalSessTarget:"Objectif sessions/jour", goalTimeTarget:"Objectif minutes/jour", goalRing:"Anneau d'objectifs", goalDone:"Objectif du jour atteint !",
+      times:"Durées", homeSections:"Sections de l'accueil", tips:"Phrases motivantes",
+      goalsHint:"Objectifs quotidiens : combien de sessions et de minutes de focus tu veux faire par jour. Suis-les dans l'écran Progrès 📊.",
+      categories:"Catégories", chartCategory:"Par catégorie", catStudy:"Étude", catWork:"Travail", catSport:"Sport", catTraining:"Entraînement", catRelax:"Détente", catFree:"Temps libre",
+      breakSoundTitle:"Son de pause", bsOff:"Silence", bsWhite:"Bruit blanc", bsBrown:"Bruit brun", bsBinaural:"Binaural", bsRain:"Pluie", bsStorm:"Orage", bsJazz:"Jazz / Lo-fi", volume:"Volume", musicTrack:"Morceau", bsMusic:"Musique", genreAll:"Tous", musicShuffle:"Lecture aléatoire", musicEmpty:"Ajoute tes morceaux dans le dossier audio/ (voir README)", soundAlways:"Jouer toujours (aussi pendant le travail)", dataTitle:"Données", clearStats:"Réinitialiser les statistiques", clearStatsNote:"Efface sessions, série et badges. Les réglages sont conservés.", clearStatsConfirm:"Réinitialiser toutes les statistiques ? Action irréversible.", binauralHint:"Binaural : utilise un casque pour percevoir l'effet.",
+      catHint:"Associe chaque session à une activité. Choisis les catégories à afficher sur le minuteur et dans le camembert.",
+      days:["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"]
+    },
+    de: {
+      settings:"Einstellungen", language:"Sprache",
+      workMin:"Arbeitsminuten", breakMin:"Pausenminuten", soundDur:"Tondauer",
+      schedule:"Zeitplanung",
+      schedNote:"Füge ein oder mehrere Zeitfenster pro Tag hinzu (z. B. 08:00–12:00, 14:00–16:00). Der Timer startet und stoppt innerhalb der Fenster automatisch. Hinweis: bei geöffneter App. Die Store-Version kann dich auch bei geschlossener App benachrichtigen.",
+      offlineHint:"Funktioniert offline · Zum Installieren zum Startbildschirm hinzufügen",
+      work:"ARBEIT", break:"PAUSE", cycle:"Zyklus", tWork:"Arbeit", tBreak:"Pause",
+      addSlot:"+ Fenster", remove:"Entfernen",
+      schedActive:"● Aktiv — Sitzung bis ", schedWaiting:"○ Wartet — ", schedNone:"○ Kein Zeitfenster geplant",
+      nextPrefix:"nächste ", nextAt:" um ", today:"heute", tomorrow:"morgen",
+      breakBody1:"Mach eine Pause von ", breakBody2:" Minuten", workBody:"Zurück an die Arbeit",
+      notifActive:"Benachrichtigungen aktiv · Bildschirm bleibt während des Timers an.",
+      notifBlocked:"Benachrichtigungen vom Browser blockiert (der Timer funktioniert trotzdem).",
+      notifAskPre:"Für Hinweise: ", notifAskLink:"Benachrichtigungen aktivieren",
+      notifUnsupported:"Benachrichtigungen werden von diesem Browser nicht unterstützt.",
+      statistics:"Statistiken", periodToday:"Heute", periodWeek:"Woche", periodMonth:"Monat", periodAll:"Gesamt",
+      statSessions:"Sitzungen", statFocusTime:"Fokuszeit", statAvg:"Ø Sitzung",
+      keepAwake:"Bildschirm anlassen", preAlertBreak:"Pause in 15s", preAlertWork:"Arbeit in 15s",
+      theme:"Design", general:"Allgemein", preAlertLabel:"15s-Hinweis vor Wechsel", chartFocus:"Fokus pro Tag", chartEquity:"Kumulierte Fokuskurve",
+      progress:"Fortschritt", goals:"Heutige Ziele", achievements:"Erfolge", streakDays:"Tage in Folge", goalSessTarget:"Ziel Sitzungen/Tag", goalTimeTarget:"Ziel Minuten/Tag", goalRing:"Zielring", goalDone:"Tagesziel erreicht!",
+      times:"Zeiten", homeSections:"Startbildschirm-Bereiche", tips:"Motivationssprüche",
+      goalsHint:"Tagesziele: wie viele Fokus-Sitzungen und Minuten du pro Tag schaffen willst. Verfolge sie im Fortschritt-Bildschirm 📊.",
+      categories:"Kategorien", chartCategory:"Nach Kategorie", catStudy:"Lernen", catWork:"Arbeit", catSport:"Sport", catTraining:"Training", catRelax:"Entspannung", catFree:"Freizeit",
+      breakSoundTitle:"Pausenton", bsOff:"Stille", bsWhite:"Weißes Rauschen", bsBrown:"Braunes Rauschen", bsBinaural:"Binaural", bsRain:"Regen", bsStorm:"Gewitter", bsJazz:"Jazz / Lo-fi", volume:"Lautstärke", musicTrack:"Titel", bsMusic:"Musik", genreAll:"Alle", musicShuffle:"Zufallswiedergabe", musicEmpty:"Lege deine Titel in den Ordner audio/ (siehe README)", soundAlways:"Immer abspielen (auch bei der Arbeit)", dataTitle:"Daten", clearStats:"Statistiken zurücksetzen", clearStatsNote:"Löscht Sitzungen, Serie und Abzeichen. Einstellungen bleiben.", clearStatsConfirm:"Alle Statistiken zurücksetzen? Kann nicht rückgängig gemacht werden.", binauralHint:"Binaural: Kopfhörer verwenden, um den Effekt zu spüren.",
+      catHint:"Ordne jede Sitzung einer Aktivität zu. Wähle, welche Kategorien im Timer und im Tortendiagramm erscheinen.",
+      days:["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"]
     }
   };
   function t(k){ return (LANG[state.lang] || LANG.it)[k]; }
   function dayName(d){ return t("days")[d]; }
   function detectLang(){
     const l = (navigator.language || "it").slice(0,2).toLowerCase();
-    return (l === "en" || l === "es") ? l : "it";
+    return (["en","es","pt","fr","de"].indexOf(l) >= 0) ? l : "it";
   }
   function syncLangSeg(){
     if(!el.langSeg) return;
@@ -848,6 +1021,102 @@
       "Mide el progreso, no el humor del día.",
       "La prisa siempre cuesta más que la paciencia.",
       "Hoy solo importa el bloque que tienes delante. Empieza."
+    ],
+    pt: [
+      "O mercado premia a paciência, não a pressa. O trabalho profundo também.",
+      "Você não controla o resultado, só o processo. Foque nisso.",
+      "Uma sessão de cada vez. A constância vence a intensidade.",
+      "Disciplina é escolher o que você mais quer em vez do que quer agora.",
+      "As pausas não são tempo perdido: fazem parte do desempenho.",
+      "Respire. Uma mente calma decide melhor.",
+      "O talento abre a porta; o hábito a mantém aberta.",
+      "Proteja sua energia como protege seu capital.",
+      "Faça o difícil enquanto é fácil fazer: agora.",
+      "Vença o dia e as semanas se vencem sozinhas.",
+      "O foco é um músculo: treina-se um bloco de cada vez.",
+      "Não precisa ser rápido, precisa não parar.",
+      "As emoções são más conselheiras quando gritam. Espere até sussurrarem.",
+      "Planeje o trabalho e depois execute o plano.",
+      "Cada distração evitada é um pequeno lucro.",
+      "O descanso faz parte do treino, não o contrário.",
+      "Quem gerencia o tempo gerencia os resultados.",
+      "Melhor uma hora de foco real que oito de presença distraída.",
+      "Grandes desempenhos nascem de pequenas rotinas repetidas.",
+      "Quando a cabeça está bagunçada, organize o próximo passo, não tudo.",
+      "O processo é seu, o resultado é do mercado. Cuide só de um.",
+      "A paciência é uma posição: às vezes o melhor movimento é esperar.",
+      "Não corra atrás: prepare, espere, execute.",
+      "Constância não é motivação, é um sistema.",
+      "Treine a mente como um atleta: carga, recuperação, repetição.",
+      "Uma respiração profunda vale mais que uma decisão impulsiva.",
+      "Faça as pazes com o tédio: é ali que cresce a disciplina.",
+      "Meça o progresso, não o humor do dia.",
+      "A pressa sempre custa mais que a paciência.",
+      "Hoje só importa o bloco à sua frente. Comece."
+    ],
+    fr: [
+      "Le marché récompense la patience, pas la précipitation. Le travail profond aussi.",
+      "Tu ne contrôles pas le résultat, seulement le processus. Concentre-toi là-dessus.",
+      "Une session à la fois. La constance bat l'intensité.",
+      "La discipline, c'est choisir ce que tu veux le plus plutôt que ce que tu veux maintenant.",
+      "Les pauses ne sont pas du temps perdu : elles font partie de la performance.",
+      "Respire. Un esprit calme prend de meilleures décisions.",
+      "Le talent ouvre la porte ; l'habitude la garde ouverte.",
+      "Protège ton énergie comme tu protèges ton capital.",
+      "Fais la chose difficile tant qu'il est facile de la faire : maintenant.",
+      "Gagne la journée et les semaines se gagnent toutes seules.",
+      "La concentration est un muscle : elle se travaille un bloc à la fois.",
+      "Pas besoin d'être rapide, il faut ne pas s'arrêter.",
+      "Les émotions sont de mauvaises conseillères quand elles crient. Attends qu'elles murmurent.",
+      "Planifie le travail, puis exécute le plan.",
+      "Chaque distraction évitée est un petit profit.",
+      "Le repos fait partie de l'entraînement, pas le contraire.",
+      "Qui gère son temps gère ses résultats.",
+      "Mieux vaut une heure de vrai focus que huit de présence distraite.",
+      "Les grandes performances naissent de petites routines répétées.",
+      "Quand ta tête est en désordre, range la prochaine étape, pas tout.",
+      "Le processus est à toi, le résultat est au marché. N'en soigne qu'un.",
+      "La patience est une position : parfois le meilleur coup est d'attendre.",
+      "Ne cours pas après : prépare, attends, exécute.",
+      "La constance n'est pas de la motivation, c'est un système.",
+      "Entraîne ton esprit comme un athlète : charge, récupère, répète.",
+      "Une respiration profonde vaut mieux qu'une décision impulsive.",
+      "Fais la paix avec l'ennui : c'est là que grandit la discipline.",
+      "Mesure les progrès, pas l'humeur du jour.",
+      "La précipitation coûte toujours plus que la patience.",
+      "Aujourd'hui, seul compte le bloc devant toi. Commence."
+    ],
+    de: [
+      "Der Markt belohnt Geduld, nicht Eile. Tiefe Arbeit ebenso.",
+      "Du kannst das Ergebnis nicht steuern, nur den Prozess. Konzentriere dich darauf.",
+      "Eine Sitzung nach der anderen. Beständigkeit schlägt Intensität.",
+      "Disziplin heißt, das zu wählen, was du am meisten willst, statt was du jetzt willst.",
+      "Pausen sind keine verlorene Zeit – sie gehören zur Leistung.",
+      "Atme. Ein ruhiger Geist trifft bessere Entscheidungen.",
+      "Talent öffnet die Tür; Gewohnheit hält sie offen.",
+      "Schütze deine Energie wie dein Kapital.",
+      "Tu das Schwere, solange es leicht ist: jetzt.",
+      "Gewinne den Tag, und die Wochen gewinnen sich von selbst.",
+      "Fokus ist ein Muskel: Er wird Block für Block trainiert.",
+      "Du musst nicht schnell sein – du darfst nur nicht aufhören.",
+      "Emotionen sind schlechte Ratgeber, wenn sie schreien. Warte, bis sie flüstern.",
+      "Plane die Arbeit, dann arbeite den Plan ab.",
+      "Jede vermiedene Ablenkung ist ein kleiner Gewinn.",
+      "Erholung gehört zum Training, nicht das Gegenteil.",
+      "Wer seine Zeit beherrscht, beherrscht seine Ergebnisse.",
+      "Eine Stunde echter Fokus ist besser als acht abgelenkter Anwesenheit.",
+      "Große Leistung entsteht aus kleinen, wiederholten Routinen.",
+      "Wenn dein Kopf chaotisch ist, ordne den nächsten Schritt, nicht alles.",
+      "Der Prozess gehört dir, das Ergebnis dem Markt. Pflege nur eines.",
+      "Geduld ist eine Position: Manchmal ist Warten der beste Zug.",
+      "Jage nicht hinterher: vorbereiten, warten, ausführen.",
+      "Beständigkeit ist keine Motivation, sondern ein System.",
+      "Trainiere deinen Geist wie ein Athlet: belasten, erholen, wiederholen.",
+      "Ein tiefer Atemzug ist mehr wert als eine impulsive Entscheidung.",
+      "Mach Frieden mit der Langeweile: Dort wächst Disziplin.",
+      "Miss den Fortschritt, nicht die Tageslaune.",
+      "Eile kostet immer mehr als Geduld.",
+      "Heute zählt nur der Block vor dir. Fang an."
     ]
   };
   let tipIdx = 0;
@@ -974,8 +1243,8 @@
   function dayNum(ts){ const d=new Date(ts); return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000); }
   function computeAgg(){
     const sess = state.sessions || [];
-    let mins = 0; const perDay = {};
-    sess.forEach(s=>{ mins += (s.mins||0); const k = dayNum(s.t); perDay[k] = (perDay[k]||0)+1; });
+    let mins = 0; const perDay = {}, perDayMins = {};
+    sess.forEach(s=>{ const v=(s.mins||0); mins += v; const k = dayNum(s.t); perDay[k] = (perDay[k]||0)+1; perDayMins[k] = (perDayMins[k]||0)+v; });
     const days = Object.keys(perDay).map(Number).sort((a,b)=>a-b);
     let best=0, run=0, prev=null;
     days.forEach(d=>{ run = (prev!==null && d-prev===1) ? run+1 : 1; if(run>best) best=run; prev=d; });
@@ -983,7 +1252,10 @@
     let cur=0, dn = perDay[todayN] ? todayN : (perDay[todayN-1] ? todayN-1 : null);
     if(dn !== null){ let x=dn; while(perDay[x]){ cur++; x--; } }
     const maxDay = days.length ? Math.max.apply(null, days.map(d=>perDay[d])) : 0;
-    return { total: sess.length, mins: mins, best: best, cur: cur, maxDay: maxDay };
+    const gs = state.goalSessions || 8, gm = state.goalMinutes || 120;
+    let goalDays = 0; days.forEach(d=>{ if(perDay[d] >= gs && (perDayMins[d]||0) >= gm) goalDays++; });
+    const goalToday = (perDay[todayN]||0) >= gs && (perDayMins[todayN]||0) >= gm;
+    return { total: sess.length, mins: mins, best: best, cur: cur, maxDay: maxDay, goalDays: goalDays, goalToday: goalToday };
   }
   function todayProgress(){
     const todayN = dayNum(Date.now());
@@ -1004,7 +1276,10 @@
     { i:"🔥", l:"3d",    t:a=>a.best>=3 },
     { i:"🔥", l:"7d",    t:a=>a.best>=7 },
     { i:"🌟", l:"30d",   t:a=>a.best>=30 },
-    { i:"⚡", l:"10/d",  t:a=>a.maxDay>=10 }
+    { i:"⚡", l:"10/d",  t:a=>a.maxDay>=10 },
+    { i:"🎖️", l:"G1",    t:a=>a.goalDays>=1 },
+    { i:"🏅", l:"G7",    t:a=>a.goalDays>=7 },
+    { i:"👑", l:"G30",   t:a=>a.goalDays>=30 }
   ];
   function renderGoals(){
     const tp = todayProgress();
@@ -1014,6 +1289,20 @@
     el.goalSessBar.style.width = Math.min(100, Math.round(tp.sessions/gs*100)) + "%";
     el.goalTimeBar.style.width = Math.min(100, Math.round(tp.mins/gm*100)) + "%";
     el.streakVal.textContent = computeAgg().cur;
+    renderGoalRing();
+  }
+  function renderGoalRing(){
+    if(!el.goalRingCard) return;
+    const tp = todayProgress();
+    const gs = state.goalSessions || 8, gm = state.goalMinutes || 120;
+    const Cs = 2*Math.PI*52, Cm = 2*Math.PI*40;
+    const fS = Math.min(1, gs ? tp.sessions/gs : 0), fM = Math.min(1, gm ? tp.mins/gm : 0);
+    el.grSess.style.strokeDasharray = Cs; el.grSess.style.strokeDashoffset = Cs*(1-fS);
+    el.grMin.style.strokeDasharray = Cm;  el.grMin.style.strokeDashoffset = Cm*(1-fM);
+    el.grNum.textContent = tp.sessions + "/" + gs;
+    el.grSessTxt.textContent = tp.sessions + "/" + gs;
+    el.grMinTxt.textContent = fmtDur(tp.mins*60) + " / " + fmtDur(gm*60);
+    el.goalRingCard.classList.toggle("done", tp.sessions >= gs && tp.mins >= gm);
   }
   function renderAchievements(){
     const agg = computeAgg();
@@ -1077,10 +1366,12 @@
 
   // ---- Home layout (which sections show on the main screen) ----
   function applyHomeLayout(){
+    el.goalRingCard.style.display = state.home.ring ? "" : "none";
     el.catRow.style.display = state.home.category ? "" : "none";
     el.tip.style.display = state.home.tips ? "" : "none";
     (state.home.times ? el.homeSlot : el.timesDefault).appendChild(el.timesCard);
     (state.home.stats ? el.homeSlot : el.statsDefault).appendChild(el.statsCard);
+    el.homeRing.checked = state.home.ring;
     el.homeCategory.checked = state.home.category;
     el.homeStats.checked = state.home.stats;
     el.homeTimes.checked = state.home.times;
@@ -1173,29 +1464,156 @@
   function soundBreakStart(){ playChime(strikeBreakStart, state.soundSec); }
   function soundBreakEnd(){ playChime(strikeBreakEnd, state.soundSec); }
 
-  // ---- Break ambient sound (generated with Web Audio, no files) ----
-  let ambNodes = null, previewTimer = null;
-  function makeNoiseBuffer(ctx, type){
-    const len = ctx.sampleRate * 2;
+  // ---- Break ambient sound (Web Audio synth + optional bundled music files) ----
+  let ambNodes = null, previewTimer = null, bgAudio = null, auditionFile = null;
+  // Music for the "Music" break sound. Two ways to provide files:
+  //  (A) audio/manifest.json = [{file,title,genre}] — generato da audio/build-manifest (legge i tag mp3 via ffprobe)
+  //  (B) fallback: file numerati audio/<genre>/<n>.mp3 (jazz/rock/rap, 1..8), rilevati via HEAD
+  let MUSIC = [];                 // [{file, name, genre}]
+  let MUSIC_GENRES = [];          // distinct lowercase genre strings present
+  let availMusic = null;          // Set of existing files (null until catalog loaded)
+  let musicShufList = [];         // files in the active shuffle playlist
+  let musicLoaded = false;
+  const SLOT_GENRES = ["jazz","rock","rap"];
+  function capit(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+  function deriveGenres(){
+    const seen = []; MUSIC.forEach(t=>{ if(t.genre && seen.indexOf(t.genre)<0) seen.push(t.genre); });
+    MUSIC_GENRES = seen;
+  }
+  function applyManifest(arr){
+    MUSIC = (arr||[]).filter(x=>x && x.file).map(x=>({
+      file: x.file.indexOf("audio/")===0 ? x.file : "audio/"+x.file,
+      name: x.title || x.file.split("/").pop().replace(/\.[^.]+$/,""),
+      genre: (x.genre||"other").toLowerCase()
+    }));
+    availMusic = new Set(MUSIC.map(t=>t.file));
+    deriveGenres();
+  }
+  function loadMusicCatalog(){
+    if(musicLoaded) return Promise.resolve();
+    if(Array.isArray(window.__MUSIC)){ applyManifest(window.__MUSIC); musicLoaded = true; return Promise.resolve(); }
+    return fetch("audio/manifest.json", {cache:"no-store"}).then(r=>{ if(!r.ok) throw 0; return r.json(); })
+      .then(arr=>{ applyManifest(arr); musicLoaded = true; })
+      .catch(()=>{
+        MUSIC = [];
+        SLOT_GENRES.forEach(g=>{ for(let i=1;i<=8;i++) MUSIC.push({ file:"audio/"+g+"/"+i+".mp3", name:capit(g)+" "+i, genre:g }); });
+        return Promise.all(MUSIC.map(t=> fetch(t.file,{method:"HEAD"}).then(r=>!!(r&&r.ok)).catch(()=>false) )).then(oks=>{
+          MUSIC = MUSIC.filter((t,i)=>oks[i]); availMusic = new Set(MUSIC.map(t=>t.file)); deriveGenres(); musicLoaded = true;
+        });
+      });
+  }
+  function isAvail(file){ return !availMusic || availMusic.has(file); }
+  function musicPlaylist(){
+    return MUSIC.filter(tr => (state.musicGenre==="all" || tr.genre===state.musicGenre) && isAvail(tr.file));
+  }
+  function makeNoiseBuffer(ctx, kind){
+    const len = ctx.sampleRate * 4;            // 4s buffer → loop molto meno percepibile
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = buf.getChannelData(0);
-    if(type === "brown"){
+    if(kind === "brown"){
       let last = 0;
       for(let i=0;i<len;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*3.5; }
+    } else if(kind === "pink"){
+      // Pink noise (approx. Paul Kellet): base naturale per la pioggia
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for(let i=0;i<len;i++){
+        const w=Math.random()*2-1;
+        b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759; b2=0.96900*b2+w*0.1538520;
+        b3=0.86650*b3+w*0.3104856; b4=0.55000*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980;
+        d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.33; b6=w*0.115926;
+      }
     } else {
-      for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+      for(let i=0;i<len;i++) d[i]=Math.random()*2-1;   // white
     }
     return buf;
   }
   function ambMult(){ return state.breakSound === "binaural" ? 0.16 : 0.5; }
+  // Un singolo tuono, sovrapposto alla pioggia
+  function thunderClap(ctx, out){
+    const t = ctx.currentTime;
+    const dur = 2.6 + Math.random()*2.2;             // 2.6–4.8s
+    const src = ctx.createBufferSource();
+    src.buffer = makeNoiseBuffer(ctx, "brown");       // brown = rombo profondo
+    src.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.Q.value=0.7;
+    lp.frequency.setValueAtTime(360, t);
+    lp.frequency.exponentialRampToValueAtTime(70, t+dur);   // sweep verso il basso = rotolìo lontano
+    const env = ctx.createGain();
+    const peak = 1.5 + Math.random()*1.1;
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(peak, t+0.08+Math.random()*0.22);   // schiocco/attacco
+    env.gain.exponentialRampToValueAtTime(0.0001, t+dur);                     // coda lunga
+    src.connect(lp).connect(env).connect(out);
+    src.start(t); src.stop(t+dur+0.1);
+    return src;
+  }
+  function ensureBgAudio(){
+    if(!bgAudio){ bgAudio = new Audio(); bgAudio.preload = "auto"; }
+    return bgAudio;
+  }
+  function playFile(file, loop){
+    const a = ensureBgAudio();
+    a.onended = null;
+    a.loop = !!loop;
+    if(a.getAttribute("data-file") !== file){ a.src = file; a.setAttribute("data-file", file); }
+    a.volume = Math.min(1, state.breakVolume/100);
+    try{ a.currentTime = 0; }catch(e){}
+    a.play().catch(()=>{});
+  }
+  function shuffleNext(){
+    if(!musicShufList.length) return;
+    const file = musicShufList[Math.floor(Math.random()*musicShufList.length)];
+    playFile(file, false);
+    ensureBgAudio().onended = ()=>{ if(ambNodes && ambNodes.file) shuffleNext(); };
+  }
+  function startMusic(){
+    ambNodes = { sources:[], timers:[], file:true };
+    const list = musicPlaylist();
+    if(state.musicShuffle){
+      musicShufList = list.map(t=>t.file);
+      if(!musicShufList.length){ stopAmbient(); return; }
+      shuffleNext();
+    } else {
+      let file = state.musicTrack;
+      if(!file || !MUSIC.some(t=>t.file===file && isAvail(file))){ file = list.length ? list[0].file : ""; }
+      if(!file){ stopAmbient(); return; }
+      playFile(file, true);
+    }
+  }
+  // Pioggia realistica = sottofondo scuro + migliaia di "gocce" (transienti brevi).
+  // È la texture granulare delle gocce che il cervello riconosce come pioggia; il rumore continuo filtrato = statica.
+  function makeRainBuffer(ctx, heavy){
+    const sr = ctx.sampleRate, N = Math.floor(sr*6);   // loop di 6s
+    const buf = ctx.createBuffer(2, N, sr);
+    for(let ch=0; ch<2; ch++){
+      const d = buf.getChannelData(ch);
+      let last = 0;                                      // wash: brown noise scuro e basso
+      for(let i=0;i<N;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*1.1; }
+      const count = Math.floor(N / (heavy ? 100 : 175)); // densità delle gocce
+      for(let n=0;n<count;n++){
+        const pos = Math.floor(Math.random()*(N-400));
+        const len = 35 + Math.floor(Math.random()*150);  // ~1-4ms per goccia
+        const amp = (0.25 + Math.random()*0.75) * (heavy ? 1.1 : 0.9);
+        const decay = 4.5/len;
+        for(let k=0;k<len;k++){ d[pos+k] += (Math.random()*2-1) * amp * Math.exp(-k*decay) * 0.22; }
+      }
+      let peak=0; for(let i=0;i<N;i++){ const a=d[i]<0?-d[i]:d[i]; if(a>peak)peak=a; }
+      if(peak>0.99){ const m=0.95/peak; for(let i=0;i<N;i++) d[i]*=m; }
+    }
+    return buf;
+  }
   function startAmbient(){
     stopAmbient();
     if(state.breakSound === "off") return;
+    if(state.breakSound === "music"){
+      startMusic();
+      return;
+    }
     const ctx = ensureAudio(); if(!ctx) return;
     const g = ctx.createGain();
     g.gain.value = (state.breakVolume/100) * ambMult();
     g.connect(ctx.destination);
-    const nodes = { gain:g, sources:[] };
+    const nodes = { gain:g, sources:[], timers:[] };
     if(state.breakSound === "binaural"){
       const base=180, beat=10;
       const oscL=ctx.createOscillator(), oscR=ctx.createOscillator();
@@ -1205,12 +1623,35 @@
         oscL.connect(pL).connect(g); oscR.connect(pR).connect(g);
       } else { oscL.connect(g); oscR.connect(g); }
       oscL.start(); oscR.start(); nodes.sources.push(oscL, oscR);
+    } else if(state.breakSound === "rain" || state.breakSound === "storm"){
+      // Pioggia a "gocce" → highpass (toglie il rombo) → lowpass morbido in lieve movimento
+      const heavy = (state.breakSound === "storm");
+      const src = ctx.createBufferSource();
+      src.buffer = makeRainBuffer(ctx, heavy); src.loop = true;
+      const hp = ctx.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=130;
+      const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.Q.value=0.5; lp.frequency.value = heavy ? 3600 : 3000;
+      const lfo = ctx.createOscillator(); lfo.type="sine"; lfo.frequency.value=0.05;   // lieve "onda" della pioggia
+      const lfoGain = ctx.createGain(); lfoGain.gain.value=700;
+      lfo.connect(lfoGain).connect(lp.frequency);
+      src.connect(hp).connect(lp).connect(g);
+      src.start(); lfo.start(); nodes.sources.push(src, lfo);
+      if(state.breakSound === "storm"){
+        const schedule = (first)=>{
+          const delay = first ? 700 : (10000 + Math.random()*28000);  // primo tuono subito (preview), poi 10–38s
+          const tm = setTimeout(()=>{
+            if(!ambNodes) return;
+            nodes.sources.push(thunderClap(ctx, g));
+            schedule(false);
+          }, delay);
+          nodes.timers.push(tm);
+        };
+        schedule(true);
+      }
     } else {
       const src = ctx.createBufferSource();
       src.buffer = makeNoiseBuffer(ctx, state.breakSound); src.loop = true;
-      if(state.breakSound === "rain" || state.breakSound === "brown"){
-        const lp = ctx.createBiquadFilter(); lp.type="lowpass";
-        lp.frequency.value = state.breakSound === "rain" ? 1400 : 700;
+      if(state.breakSound === "brown"){
+        const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=700;
         src.connect(lp).connect(g);
       } else { src.connect(g); }
       src.start(); nodes.sources.push(src);
@@ -1219,18 +1660,36 @@
   }
   function stopAmbient(){
     if(previewTimer){ clearTimeout(previewTimer); previewTimer = null; }
+    if(bgAudio){ try{ bgAudio.onended = null; bgAudio.pause(); }catch(e){} }
+    auditionFile = null;
     if(!ambNodes) return;
-    ambNodes.sources.forEach(s=>{ try{ s.stop(); }catch(e){} });
-    try{ ambNodes.gain.disconnect(); }catch(e){}
+    if(ambNodes.timers) ambNodes.timers.forEach(t=>{ try{ clearTimeout(t); }catch(e){} });
+    if(ambNodes.sources) ambNodes.sources.forEach(s=>{ try{ s.stop(); }catch(e){} });
+    if(ambNodes.gain){ try{ ambNodes.gain.disconnect(); }catch(e){} }
     ambNodes = null;
   }
   function setAmbientVolume(){
-    if(ambNodes){ try{ ambNodes.gain.gain.value = (state.breakVolume/100) * ambMult(); }catch(e){} }
+    if(ambNodes && ambNodes.file){ if(bgAudio){ try{ bgAudio.volume = Math.min(1, state.breakVolume/100); }catch(e){} } return; }
+    if(ambNodes && ambNodes.gain){ try{ ambNodes.gain.gain.value = (state.breakVolume/100) * ambMult(); }catch(e){} }
+  }
+  // Decide whether ambient should play right now (break-only by default, or always if enabled).
+  function updateAmbient(){
+    const should = state.running && state.breakSound !== "off" && (state.soundAlways || state.phase === "break");
+    if(should){ if(!ambNodes || auditionFile) startAmbient(); }   // (re)start real ambient, replacing any audition
+    else { stopAmbient(); }
+  }
+  // Audition a single track (▶ on a row), regardless of shuffle/genre.
+  function auditionTrack(file){
+    stopAmbient();
+    ambNodes = { sources:[], timers:[], file:true };
+    auditionFile = file;
+    playFile(file, true);
   }
   function previewBreakSound(){
     startAmbient();
-    if(!(state.running && state.phase === "break") && state.breakSound !== "off"){
-      previewTimer = setTimeout(stopAmbient, 4000);   // short preview when idle
+    // music plays until you stop it / close settings; synth sounds get a short 4s preview when idle
+    if(!(state.running && state.phase === "break") && state.breakSound !== "off" && state.breakSound !== "music"){
+      previewTimer = setTimeout(stopAmbient, 4000);
     }
   }
 
@@ -1280,7 +1739,7 @@
         logSession(state.workMin);   // a focus session just completed
         rotateTip(true);
         soundBreakStart();
-        startAmbient();              // ambient sound during the break
+        updateAmbient();            // ambient sound (break, or always if enabled)
         notify(t("breakBody1") + state.breakMin + t("breakBody2"));
       }
     }else{
@@ -1288,7 +1747,7 @@
       state.phase = "work";
       state.cycle += 1;
       if(!silent){
-        stopAmbient();              // break ended
+        updateAmbient();            // stop on work (unless "always" is enabled)
         rotateTip(true);
         soundBreakEnd();
         notify(t("workBody"));
@@ -1324,7 +1783,7 @@
     state.running = true;
     state.endAt = Date.now() + state.remaining*1000;
     requestWakeLock();
-    if(state.phase === "break") startAmbient();   // resume ambient if a break was paused
+    updateAmbient();   // start ambient (break only, or always if enabled)
     if(tickHandle) clearInterval(tickHandle);
     tickHandle = setInterval(tick, 250);
     render(); save();
@@ -1573,13 +2032,14 @@
 
   // settings sheet open/close
   el.gearBtn.addEventListener("click", ()=>{ el.sheet.classList.add("open"); });
-  el.sheetClose.addEventListener("click", ()=>{ el.sheet.classList.remove("open"); });
+  el.sheetClose.addEventListener("click", ()=>{ el.sheet.classList.remove("open"); updateAmbient(); });
 
   // progress sheet open/close
   el.progBtn.addEventListener("click", ()=>{ renderProgress(); el.progressSheet.classList.add("open"); });
   el.progClose.addEventListener("click", ()=>{ el.progressSheet.classList.remove("open"); });
 
   // home section toggles
+  el.homeRing.addEventListener("change", ()=>{ state.home.ring = el.homeRing.checked; applyHomeLayout(); renderGoalRing(); save(); });
   el.homeCategory.addEventListener("change", ()=>{ state.home.category = el.homeCategory.checked; applyHomeLayout(); save(); });
   el.homeStats.addEventListener("change", ()=>{ state.home.stats = el.homeStats.checked; applyHomeLayout(); renderProgress(); save(); });
   el.homeTimes.addEventListener("change", ()=>{ state.home.times = el.homeTimes.checked; applyHomeLayout(); save(); });
@@ -1595,9 +2055,30 @@
   });
 
   // break ambient sound
+  function renderMusic(){
+    if(!el.musicGenres) return;
+    let chips = '<div class="chip'+(state.musicGenre==="all"?" active":"")+'" data-g="all">'+t("genreAll")+'</div>';
+    MUSIC_GENRES.forEach(g=>{
+      chips += '<div class="chip'+(state.musicGenre===g?" active":"")+'" data-g="'+g+'">'+capit(g)+'</div>';
+    });
+    el.musicGenres.innerHTML = chips;
+    el.musicShuffle.checked = !!state.musicShuffle;
+    const list = musicPlaylist();
+    if(!list.length){ el.musicList.innerHTML = '<div class="field-note">'+t("musicEmpty")+'</div>'; return; }
+    const playingFile = auditionFile;   // ⏸ solo sulla traccia in anteprima
+    el.musicList.innerHTML = list.map(tr=>{
+      const on = (!state.musicShuffle && state.musicTrack===tr.file);
+      const playing = (playingFile===tr.file);
+      return '<div class="mtrack'+(on?" active":"")+'" data-file="'+tr.file+'"><span class="mt-name">'+tr.name+'</span><span class="mt-play">'+(playing?"⏸":"▶")+'</span></div>';
+    }).join('');
+  }
   function syncBreakSound(){
     el.breakSoundOpts.querySelectorAll("button").forEach(b=>{ b.classList.toggle("active", b.dataset.bs===state.breakSound); });
     el.breakVol.value = state.breakVolume;
+    if(el.soundAlways) el.soundAlways.checked = state.soundAlways;
+    const isMusic = (state.breakSound === "music");
+    if(el.musicPanel) el.musicPanel.style.display = isMusic ? "" : "none";
+    if(isMusic){ renderMusic(); loadMusicCatalog().then(renderMusic); }
   }
   el.breakSoundOpts.addEventListener("click", (e)=>{
     const b = e.target.closest("button[data-bs]");
@@ -1605,12 +2086,41 @@
     state.breakSound = b.dataset.bs;
     syncBreakSound();
     save();
-    previewBreakSound();
+    // synth sounds get a 4s preview; "music" never auto-plays (only the ▶ on a row does)
+    if(state.breakSound === "music"){ stopAmbient(); } else { previewBreakSound(); }
+  });
+  el.musicGenres.addEventListener("click", (e)=>{
+    const c = e.target.closest(".chip[data-g]"); if(!c) return;
+    state.musicGenre = c.dataset.g; save();
+    renderMusic();                 // solo filtro: non avvia nessun brano
+  });
+  el.musicShuffle.addEventListener("change", ()=>{
+    state.musicShuffle = el.musicShuffle.checked; save();
+    renderMusic();                 // solo modalità: non avvia nessun brano
+  });
+  el.musicList.addEventListener("click", (e)=>{
+    const row = e.target.closest(".mtrack[data-file]"); if(!row) return;
+    const file = row.dataset.file;
+    state.musicTrack = file; save();          // ricorda la traccia (usata se shuffle è off)
+    if(auditionFile === file){ stopAmbient(); }   // ▶/⏸: riclicca per fermare l'anteprima
+    else { auditionTrack(file); }
+    renderMusic();
   });
   el.breakVol.addEventListener("input", ()=>{
     state.breakVolume = parseInt(el.breakVol.value,10) || 0;
     setAmbientVolume();
     save();
+  });
+  el.soundAlways.addEventListener("change", ()=>{
+    state.soundAlways = el.soundAlways.checked;
+    save();
+    updateAmbient();   // applica subito se il timer sta girando
+  });
+  el.clearStatsBtn.addEventListener("click", ()=>{
+    if(!confirm(t("clearStatsConfirm"))) return;
+    state.sessions = [];
+    save();
+    renderProgress();   // stats, obiettivi, streak, badge, anello, donut categorie
   });
 
   // category enable/disable
@@ -1710,14 +2220,20 @@
   el.preAlertOn.checked = state.preAlertOn;
   el.goalSessions.value = state.goalSessions;
   el.goalMinutes.value = state.goalMinutes;
-  if(!state.home || typeof state.home !== "object") state.home = { category:true, stats:false, times:false, tips:true };
+  if(!state.home || typeof state.home !== "object") state.home = { ring:true, category:true, stats:false, times:false, tips:true };
+  if(typeof state.home.ring !== "boolean") state.home.ring = true;
   if(typeof state.home.category !== "boolean") state.home.category = true;
   if(typeof state.home.stats !== "boolean") state.home.stats = false;
   if(typeof state.home.times !== "boolean") state.home.times = false;
   if(typeof state.home.tips !== "boolean") state.home.tips = true;
   if(!CATEGORIES.some(c=>c.id===state.category)) state.category = "work";
-  if(["off","white","brown","binaural","rain"].indexOf(state.breakSound) < 0) state.breakSound = "off";
+  if(state.breakSound === "jazz") state.breakSound = "music";   // migrate old value
+  if(["off","white","brown","binaural","rain","storm","music"].indexOf(state.breakSound) < 0) state.breakSound = "off";
   if(typeof state.breakVolume !== "number") state.breakVolume = 40;
+  if(typeof state.soundAlways !== "boolean") state.soundAlways = false;
+  if(typeof state.musicGenre !== "string" || !state.musicGenre) state.musicGenre = "all";
+  if(typeof state.musicShuffle !== "boolean") state.musicShuffle = true;
+  if(typeof state.musicTrack !== "string" || state.musicTrack.indexOf("/") < 0) state.musicTrack = "";
   if(!state.catEnabled || typeof state.catEnabled !== "object") state.catEnabled = {};
   CATEGORIES.forEach(c=>{ if(typeof state.catEnabled[c.id] !== "boolean") state.catEnabled[c.id] = true; });
   if(!state.catEnabled[state.category]){ const f=CATEGORIES.find(c=>state.catEnabled[c.id]); if(f) state.category=f.id; }

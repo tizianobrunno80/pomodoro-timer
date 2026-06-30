@@ -1,5 +1,5 @@
 /* Minimal offline service worker for Pomodoro Timer */
-const CACHE = "pomodoro-v15";
+const CACHE = "pomodoro-v16";
 const ASSETS = [
   "./",
   "./index.html",
