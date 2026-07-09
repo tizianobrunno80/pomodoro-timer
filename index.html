@@ -910,6 +910,12 @@
     const l = (navigator.language || "it").slice(0,2).toLowerCase();
     return (["en","es","pt","fr","de"].indexOf(l) >= 0) ? l : "it";
   }
+  function paramLang(){
+    try{
+      const l = new URLSearchParams(location.search).get("lang");
+      return (l && LANG[l]) ? l : null;
+    }catch(e){ return null; }
+  }
   function syncLangSeg(){
     if(!el.langSeg) return;
     el.langSeg.querySelectorAll("button").forEach(b=>{
@@ -2200,7 +2206,9 @@
 
   // ---- Boot ----
   load();
-  if(!state.lang || !LANG[state.lang]) state.lang = detectLang();
+  const forcedLang = paramLang();
+  if(forcedLang) state.lang = forcedLang;
+  else if(!state.lang || !LANG[state.lang]) state.lang = detectLang();
   applyI18n();
   if(state.soundSec !== 5 && state.soundSec !== 10) state.soundSec = defaults.soundSec;
   if(!state.schedule || typeof state.schedule !== "object") state.schedule = {enabled:false, days:{0:[],1:[],2:[],3:[],4:[],5:[],6:[]}};
