@@ -26,6 +26,9 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
+  /* Embed in iframe (tradingblog.it): l'altezza la impone il parent, niente scrollbar interna. */
+  html.embed{overflow:hidden}
+  html.embed,html.embed body{height:auto;min-height:0}
   body{
     background:var(--bg);
     color:var(--txt);
@@ -2274,6 +2277,23 @@
     window.addEventListener("load", ()=>{
       navigator.serviceWorker.register("sw.js").catch(()=>{});
     });
+  }
+
+  // ---- Embed: comunica l'altezza al parent cosi' l'iframe non deve scrollare ----
+  if(window.self !== window.top){
+    document.documentElement.classList.add("embed");
+    let lastH = 0;
+    const postHeight = ()=>{
+      const h = Math.ceil(document.body.scrollHeight);
+      if(h > 200 && Math.abs(h - lastH) > 2){
+        lastH = h;
+        try{ window.parent.postMessage({tbFocusHeight:h}, "*"); }catch(e){}
+      }
+    };
+    if(window.ResizeObserver) new ResizeObserver(postHeight).observe(document.body);
+    window.addEventListener("load", postHeight);
+    window.addEventListener("resize", postHeight);
+    setTimeout(postHeight, 400);
   }
 })();
 </script>
